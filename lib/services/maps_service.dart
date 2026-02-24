@@ -1,10 +1,11 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../models/models.dart';
+import '../core/constants/app_colors.dart';
 
 class MapsService {
-  // TODO: Add your Google Maps API key here or load from environment
   static const String _apiKey = 'YOUR_GOOGLE_MAPS_API_KEY';
 
   Future<Map<String, dynamic>?> getDirections(
@@ -26,7 +27,7 @@ class MapsService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        
+
         if (data['status'] == 'OK' && data['routes'].isNotEmpty) {
           final route = data['routes'][0];
           final leg = route['legs'][0];
@@ -102,7 +103,8 @@ class MapsService {
         position: LatLng(location.lat, location.lng),
         infoWindow: InfoWindow(
           title: location.name,
-          snippet: location.type == LocationType.center ? 'Center' : 'Deposit Point',
+          snippet:
+              location.type == LocationType.center ? 'Center' : 'Deposit Point',
         ),
         icon: BitmapDescriptor.defaultMarkerWithHue(
           location.type == LocationType.center
@@ -118,13 +120,8 @@ class MapsService {
     return Polyline(
       polylineId: const PolylineId('route'),
       points: points,
-      color: const Color(0xFF1B6B3A),
+      color: AppColors.primaryGreen,
       width: 5,
     );
   }
-}
-
-class Color {
-  final int value;
-  const Color(this.value);
 }

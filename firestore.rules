@@ -1,0 +1,141 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && getUserRole() == 'admin';
+    }
+    
+    function isManager() {
+      return isAuthenticated() && getUserRole() == 'manager';
+    }
+    
+    function isEmployee() {
+      return isAuthenticated() && getUserRole() == 'employee';
+    }
+    
+    function isRegularUser() {
+      return isAuthenticated() && getUserRole() == 'regular';
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Anyone can read their own document
+      // Admin/Manager can read all users
+      allow read: if isOwner(userId) || isAdmin() || isManager();
+      
+      // Users can update their own profile (except role)
+      allow update: if isOwner(userId) && 
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'activationStatus']);
+      
+      // Only Manager can update activation status
+      allow update: if isManager() && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['activationStatus']);
+      
+      // Anyone can create (registration)
+      allow create: if true;
+    }
+    
+    // Reports collection
+    match /reports/{reportId} {
+      // Anyone authenticated can read reports
+      allow read: if isAuthenticated();
+      
+      // Regular users can create reports
+      allow create: if isAuthenticated();
+      
+      // Admin and Employee can update report status
+      allow update: if isAdmin() || isEmployee();
+      
+      // Only Admin can delete reports
+      allow delete: if isAdmin();
+    }
+    
+    // Movement History collection
+    match /movementHistory/{docId} {
+      // Users can read/write their own movement history
+      // Admin can read all movement history
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create, update: if isOwner(request.resource.data.userId);
+      allow delete: if false; // Never delete movement history
+    }
+    
+    // Elevated Account Requests collection
+    match /elevatedAccountRequests/{requestId} {
+      // Users can read their own requests
+      // Manager can read all requests
+      allow read: if isOwner(resource.data.userId) || isManager();
+      
+      // Anyone can create a request (during registration)
+      allow create: if true;
+      
+      // Only Manager can update requests (approve/reject)
+      allow update: if isManager();
+      
+      // No deletion allowed
+      allow delete: if false;
+    }
+    
+    // Notifications collection
+    match /notifications/{notificationId} {
+      // Users can read their own notifications
+      allow read: if isOwner(resource.data.recipientUserId);
+      
+      // System can create notifications (Admin/Employee/Manager)
+      allow create: if isAdmin() || isEmployee() || isManager();
+      
+      // Users can update their own notifications (mark as read)
+      allow update: if isOwner(resource.data.recipientUserId) && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
+      
+      // No deletion allowed
+      allow delete: if false;
+    }
+    
+    // Locations collection (Lost & Found Centers)
+    match /locations/{locationId} {
+      // Anyone authenticated can read locations
+      allow read: if isAuthenticated();
+      
+      // Only Admin can create/update/delete locations
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // History collection (Action logs)
+    match /history/{historyId} {
+      // Admin, Employee, Manager can read history
+      allow read: if isAdmin() || isEmployee() || isManager();
+      
+      // System creates history entries
+      allow create: if isAuthenticated();
+      
+      // No updates or deletions
+      allow update, delete: if false;
+    }
+    
+    // Login Logs collection
+    match /loginLogs/{logId} {
+      // Admin can read all login logs
+      allow read: if isAdmin();
+      
+      // System creates login logs
+      allow create: if true;
+      
+      // No updates or deletions
+      allow update, delete: if false;
+    }
+  }
+}

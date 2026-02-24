@@ -1,33 +1,164 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'core/theme/app_theme.dart';
+import 'core/localization/app_localizations.dart';
+import 'providers/providers.dart';
+import 'services/services.dart';
+import 'models/models.dart';
+import 'screens/auth/login_screen.dart';
+import 'screens/regular_user/regular_user_home_screen.dart';
+import 'screens/employee/employee_home_screen.dart';
+import 'screens/admin/admin_home_screen.dart';
+import 'screens/manager/manager_home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(MyApp());
+
+  await Firebase.initializeApp();
+
+  final prefs = await SharedPreferences.getInstance();
+  final savedLang = prefs.getString('language') ?? 'ar';
+
+  runApp(AtharApp(initialLocale: Locale(savedLang)));
 }
 
-class MyApp extends StatefulWidget {
-  @override
-  _MyAppState createState() => _MyAppState();
-}
+class AtharApp extends StatelessWidget {
+  final Locale initialLocale;
 
-class _MyAppState extends State<MyApp> {
+  const AtharApp({super.key, required this.initialLocale});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-            title: '',
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()..initialize()),
+        ChangeNotifierProvider(create: (_) => LocaleProvider()..initialize()),
+        ChangeNotifierProvider(create: (_) => ReportsProvider()),
+      ],
+      child: Consumer<LocaleProvider>(
+        builder: (context, localeProvider, _) {
+          return MaterialApp(
+            title: 'Athar - أثر',
             debugShowCheckedModeBanner: false,
-            home: StreamBuilder(
-              stream: FirebaseAuth.instance.authStateChanges(),
-              builder: ((BuildContext context, snapshot) {
-                return SplashScreen(snapshot: snapshot);
-              }),
-            ),
+            theme: AppTheme.lightTheme,
+            locale: localeProvider.locale,
+            supportedLocales: const [
+              Locale('en'),
+              Locale('ar'),
+            ],
+            localizationsDelegates: [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            builder: (context, child) {
+              return Directionality(
+                textDirection: localeProvider.isArabic
+                    ? TextDirection.rtl
+                    : TextDirection.ltr,
+                child: child!,
+              );
+            },
+            home: const AuthWrapper(),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, _) {
+        if (authProvider.isLoading) {
+          return const SplashScreen();
+        }
+
+        if (!authProvider.isLoggedIn) {
+          return const LoginScreen();
+        }
+
+        return _getHomeScreen(authProvider.currentUser!.role);
+      },
     );
   }
 
-
+  Widget _getHomeScreen(UserRole role) {
+    switch (role) {
+      case UserRole.employee:
+        return const EmployeeHomeScreen();
+      case UserRole.admin:
+        return const AdminHomeScreen();
+      case UserRole.manager:
+        return const ManagerHomeScreen();
+      default:
+        return const RegularUserHomeScreen();
+    }
+  }
 }
 
+class SplashScreen extends StatelessWidget {
+  const SplashScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF1B6B3A),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: const Center(
+                child: Text(
+                  'أثر',
+                  style: TextStyle(
+                    fontSize: 48,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1B6B3A),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Athar',
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Smart Lost & Found System',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.white70,
+              ),
+            ),
+            const SizedBox(height: 48),
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
