@@ -25,9 +25,9 @@ class NotificationsScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.get('notifications')),
-      ),
+      // appBar: AppBar(
+      //   title: Text(l10n.get('notifications')),
+      // ),
       body: StreamBuilder<List<NotificationModel>>(
         stream: firestoreService.notificationsStream(userId),
         builder: (context, snapshot) {

@@ -44,34 +44,11 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (result['success']) {
-      final user = result['user'] as UserModel;
-      _navigateToHome(user.role);
+      // Navigation is handled by AuthWrapper in main.dart
+      // The AuthProvider state change will trigger automatic navigation
     } else {
       _showErrorMessage(result['error']);
     }
-  }
-
-  void _navigateToHome(UserRole role) {
-    Widget homeScreen;
-    switch (role) {
-      case UserRole.employee:
-        homeScreen = const EmployeeHomeScreen();
-        break;
-      case UserRole.admin:
-        homeScreen = const AdminHomeScreen();
-        break;
-      case UserRole.manager:
-        homeScreen = const ManagerHomeScreen();
-        break;
-      default:
-        homeScreen = const RegularUserHomeScreen();
-    }
-
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => homeScreen),
-      (route) => false,
-    );
   }
 
   void _showErrorMessage(String? error) {
@@ -165,8 +142,8 @@ class _LoginScreenState extends State<LoginScreen> {
         Text(
           'Smart Lost & Found System',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppColors.textSecondary,
-          ),
+                color: AppColors.textSecondary,
+              ),
         ),
       ],
     );

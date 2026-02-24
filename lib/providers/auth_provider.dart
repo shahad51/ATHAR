@@ -4,7 +4,7 @@ import '../services/services.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
-  
+
   UserModel? _currentUser;
   bool _isLoading = false;
   String? _error;
@@ -41,16 +41,20 @@ class AuthProvider with ChangeNotifier {
       if (result['success']) {
         _currentUser = result['user'] as UserModel;
         _isFirstLogin = true;
+        _isLoading = false;
+        notifyListeners();
       } else {
         _error = result['error'];
+        _currentUser = null;
+        _isLoading = false;
+        notifyListeners();
       }
 
-      _isLoading = false;
-      notifyListeners();
       return result;
     } catch (e) {
       _isLoading = false;
       _error = e.toString();
+      _currentUser = null;
       notifyListeners();
       return {'success': false, 'error': 'login_failed'};
     }
@@ -112,7 +116,8 @@ class AuthProvider with ChangeNotifier {
     return result;
   }
 
-  Future<Map<String, dynamic>> resetPassword(String userId, String newPassword) async {
+  Future<Map<String, dynamic>> resetPassword(
+      String userId, String newPassword) async {
     _isLoading = true;
     notifyListeners();
 
