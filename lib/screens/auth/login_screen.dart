@@ -1,0 +1,245 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../core/constants/app_colors.dart';
+import '../../core/localization/app_localizations.dart';
+import '../../models/models.dart';
+import '../../providers/providers.dart';
+import '../../widgets/widgets.dart';
+import '../regular_user/regular_user_home_screen.dart';
+import '../employee/employee_home_screen.dart';
+import '../admin/admin_home_screen.dart';
+import '../manager/manager_home_screen.dart';
+import 'register_screen.dart';
+import 'forgot_password_screen.dart';
+
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final authProvider = context.read<AuthProvider>();
+    final result = await authProvider.login(
+      _usernameController.text.trim(),
+      _passwordController.text,
+    );
+
+    if (!mounted) return;
+
+    if (result['success']) {
+      final user = result['user'] as UserModel;
+      _navigateToHome(user.role);
+    } else {
+      _showErrorMessage(result['error']);
+    }
+  }
+
+  void _navigateToHome(UserRole role) {
+    Widget homeScreen;
+    switch (role) {
+      case UserRole.employee:
+        homeScreen = const EmployeeHomeScreen();
+        break;
+      case UserRole.admin:
+        homeScreen = const AdminHomeScreen();
+        break;
+      case UserRole.manager:
+        homeScreen = const ManagerHomeScreen();
+        break;
+      default:
+        homeScreen = const RegularUserHomeScreen();
+    }
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => homeScreen),
+      (route) => false,
+    );
+  }
+
+  void _showErrorMessage(String? error) {
+    final l10n = AppLocalizations.of(context)!;
+    String message;
+
+    switch (error) {
+      case 'account_pending':
+        message = l10n.get('account_pending');
+        break;
+      case 'account_rejected':
+        message = l10n.get('account_rejected');
+        break;
+      default:
+        message = l10n.get('invalid_credentials');
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.error,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isLoading = context.watch<AuthProvider>().isLoading;
+
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 60),
+                _buildHeader(l10n),
+                const SizedBox(height: 48),
+                _buildUsernameField(l10n),
+                const SizedBox(height: 16),
+                _buildPasswordField(l10n),
+                const SizedBox(height: 8),
+                _buildForgotPassword(l10n),
+                const SizedBox(height: 32),
+                CustomButton(
+                  text: l10n.get('login'),
+                  onPressed: _handleLogin,
+                  isLoading: isLoading,
+                ),
+                const SizedBox(height: 24),
+                _buildRegisterLink(l10n),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(AppLocalizations l10n) {
+    return Column(
+      children: [
+        Container(
+          width: 100,
+          height: 100,
+          decoration: BoxDecoration(
+            color: AppColors.primaryGreen,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const Center(
+            child: Text(
+              'أثر',
+              style: TextStyle(
+                fontSize: 36,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          l10n.get('app_name_arabic'),
+          style: Theme.of(context).textTheme.displaySmall,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Smart Lost & Found System',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUsernameField(AppLocalizations l10n) {
+    return CustomTextField(
+      controller: _usernameController,
+      label: l10n.get('username'),
+      prefixIcon: const Icon(Icons.person_outline),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return '${l10n.get('username')} is required';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildPasswordField(AppLocalizations l10n) {
+    return CustomTextField(
+      controller: _passwordController,
+      label: l10n.get('password'),
+      obscureText: _obscurePassword,
+      prefixIcon: const Icon(Icons.lock_outline),
+      suffixIcon: IconButton(
+        icon: Icon(
+          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+        ),
+        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return '${l10n.get('password')} is required';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildForgotPassword(AppLocalizations l10n) {
+    return Align(
+      alignment: AlignmentDirectional.centerEnd,
+      child: TextButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+          );
+        },
+        child: Text(l10n.get('forgot_password')),
+      ),
+    );
+  }
+
+  Widget _buildRegisterLink(AppLocalizations l10n) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          "Don't have an account? ",
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const RegisterScreen()),
+            );
+          },
+          child: Text(l10n.get('register')),
+        ),
+      ],
+    );
+  }
+}
