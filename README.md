@@ -122,11 +122,11 @@ lib/
      ```xml
      <meta-data
          android:name="com.google.android.geo.API_KEY"
-         android:value="YOUR_API_KEY"/>
+         android:value="AIzaSyBogqnASso-oa85MSmbd3OdGCNSdpvI7oA"/>
      ```
    - `ios/Runner/AppDelegate.swift`:
      ```swift
-     GMSServices.provideAPIKey("YOUR_API_KEY")
+     GMSServices.provideAPIKey("AIzaSyBogqnASso-oa85MSmbd3OdGCNSdpvI7oA")
      ```
 3. Update the API key in `lib/services/maps_service.dart`
 

@@ -1,0 +1,2 @@
+/Users/hamedesam/Desktop/ForMac/projects/GraduationProjects/ATHAR/app/android/app/.cxx/Debug/65y5f6p4/armeabi-v7a/CMakeFiles/edit_cache.dir
+/Users/hamedesam/Desktop/ForMac/projects/GraduationProjects/ATHAR/app/android/app/.cxx/Debug/65y5f6p4/armeabi-v7a/CMakeFiles/rebuild_cache.dir
