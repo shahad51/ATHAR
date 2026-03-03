@@ -1,63 +1,151 @@
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:tflite_flutter/tflite_flutter.dart';
+import 'package:image/image.dart' as img;
 import '../models/models.dart';
 import '../core/constants/app_constants.dart';
 
 class AiMatchingService {
+  static const String _modelPath = 'assets/models/image_embedding_model.tflite';
+  static const int _inputSize = 224;
+  static const int _featureSize = 1000; // EfficientNet-Lite0 output size
+
+  Interpreter? _interpreter;
   bool _isModelLoaded = false;
 
   Future<void> loadModel() async {
-    // TODO: Load TFLite model for image feature extraction
-    // For now, this is a placeholder that simulates model loading
+    if (_isModelLoaded && _interpreter != null) return;
+
     try {
-      await Future.delayed(const Duration(milliseconds: 500));
+      debugPrint('🤖 [AI] Loading TFLite model...');
+      _interpreter = await Interpreter.fromAsset(_modelPath);
       _isModelLoaded = true;
-      debugPrint('AI model loaded (placeholder)');
+      debugPrint('🤖 [AI] Model loaded successfully!');
+      debugPrint(
+          '🤖 [AI] Input shape: ${_interpreter!.getInputTensor(0).shape}');
+      debugPrint(
+          '🤖 [AI] Output shape: ${_interpreter!.getOutputTensor(0).shape}');
     } catch (e) {
-      debugPrint('Failed to load AI model: $e');
+      debugPrint('🤖 [AI] Failed to load model: $e');
       _isModelLoaded = false;
+      _interpreter = null;
     }
   }
 
   bool get isModelLoaded => _isModelLoaded;
 
+  void dispose() {
+    _interpreter?.close();
+    _interpreter = null;
+    _isModelLoaded = false;
+  }
+
   Future<List<double>?> extractFeatureVector(File imageFile) async {
-    // TODO: Implement actual feature extraction using TFLite
-    // This is a placeholder that returns a random feature vector
-    if (!_isModelLoaded) {
+    if (!_isModelLoaded || _interpreter == null) {
       await loadModel();
     }
 
-    try {
-      // Placeholder: Generate random feature vector for testing
-      final random = Random();
-      return List.generate(128, (_) => random.nextDouble());
-    } catch (e) {
-      debugPrint('Failed to extract features: $e');
+    if (_interpreter == null) {
+      debugPrint('🤖 [AI] Model not available');
       return null;
     }
+
+    try {
+      debugPrint('🤖 [AI] Processing image: ${imageFile.path}');
+
+      // Read and preprocess image
+      final imageBytes = await imageFile.readAsBytes();
+      final image = img.decodeImage(imageBytes);
+
+      if (image == null) {
+        debugPrint('🤖 [AI] Failed to decode image');
+        return null;
+      }
+
+      // Resize to model input size
+      final resizedImage =
+          img.copyResize(image, width: _inputSize, height: _inputSize);
+
+      // Convert to normalized float array [0, 1]
+      final input = _imageToFloatArray(resizedImage);
+
+      // Prepare output buffer
+      final output = List.filled(_featureSize, 0.0).reshape([1, _featureSize]);
+
+      // Run inference
+      _interpreter!.run(input, output);
+
+      // Extract and normalize feature vector
+      final features = List<double>.from(output[0]);
+      final normalizedFeatures = _normalizeVector(features);
+
+      debugPrint(
+          '🤖 [AI] Feature extraction complete. Vector size: ${normalizedFeatures.length}');
+      return normalizedFeatures;
+    } catch (e) {
+      debugPrint('🤖 [AI] Feature extraction failed: $e');
+      return null;
+    }
+  }
+
+  List<List<List<List<double>>>> _imageToFloatArray(img.Image image) {
+    // Create input tensor [1, 224, 224, 3]
+    final input = List.generate(
+      1,
+      (_) => List.generate(
+        _inputSize,
+        (y) => List.generate(
+          _inputSize,
+          (x) {
+            final pixel = image.getPixel(x, y);
+            // Normalize to [0, 1] - EfficientNet expects values in [0, 255] / 255
+            return [
+              pixel.r / 255.0,
+              pixel.g / 255.0,
+              pixel.b / 255.0,
+            ];
+          },
+        ),
+      ),
+    );
+    return input;
+  }
+
+  List<double> _normalizeVector(List<double> vector) {
+    // L2 normalization for better similarity comparison
+    double norm = 0.0;
+    for (final v in vector) {
+      norm += v * v;
+    }
+    norm = sqrt(norm);
+
+    if (norm == 0) return vector;
+    return vector.map((v) => v / norm).toList();
   }
 
   Future<List<ReportMatch>> findMatches(
     File imageFile,
     List<ReportModel> foundReports,
   ) async {
-    // TODO: Implement actual AI matching using TFLite
-    // This placeholder returns empty list as specified
-    
-    if (!_isModelLoaded) {
+    debugPrint(
+        '🤖 [AI] Finding matches for image against ${foundReports.length} reports');
+
+    if (!_isModelLoaded || _interpreter == null) {
       await loadModel();
     }
 
-    if (!_isModelLoaded) {
-      debugPrint('AI model not available, returning empty matches');
+    if (_interpreter == null) {
+      debugPrint('🤖 [AI] Model not available, returning empty matches');
       return [];
     }
 
     try {
       final queryFeatures = await extractFeatureVector(imageFile);
       if (queryFeatures == null) {
+        debugPrint('🤖 [AI] Failed to extract query features');
         return [];
       }
 
@@ -68,7 +156,10 @@ class AiMatchingService {
           continue;
         }
 
-        final similarity = _cosineSimilarity(queryFeatures, report.featureVector!);
+        final similarity =
+            _cosineSimilarity(queryFeatures, report.featureVector!);
+        debugPrint(
+            '🤖 [AI] Report ${report.reportId}: similarity = ${(similarity * 100).toStringAsFixed(1)}%');
 
         if (similarity >= AppConstants.aiMatchThreshold) {
           matches.add(ReportMatch(
@@ -80,10 +171,11 @@ class AiMatchingService {
 
       // Sort by confidence score descending
       matches.sort((a, b) => b.confidenceScore.compareTo(a.confidenceScore));
+      debugPrint('🤖 [AI] Found ${matches.length} matches above threshold');
 
       return matches;
     } catch (e) {
-      debugPrint('AI matching failed: $e');
+      debugPrint('🤖 [AI] Matching failed: $e');
       return [];
     }
   }
@@ -111,28 +203,16 @@ class AiMatchingService {
     List<ReportModel> filteredReports,
   ) async {
     if (imageFile == null) {
-      // Return rule-based matches only with default confidence
-      return filteredReports.map((report) {
-        return ReportMatch(
-          report: report,
-          confidenceScore: 0.7, // Default confidence for rule-based matches
-        );
-      }).toList();
+      // No image provided - return empty (user must provide image for AI matching)
+      debugPrint('🤖 [AI] No image provided for matching');
+      return [];
     }
 
-    // Get AI matches
+    // Get AI matches - only return actual matches
     final aiMatches = await findMatches(imageFile, filteredReports);
 
-    if (aiMatches.isEmpty) {
-      // Fall back to rule-based if AI fails
-      return filteredReports.map((report) {
-        return ReportMatch(
-          report: report,
-          confidenceScore: 0.7,
-        );
-      }).toList();
-    }
-
+    // Return only actual matches, don't fall back to showing all items
+    debugPrint('🤖 [AI] Returning ${aiMatches.length} AI matches');
     return aiMatches;
   }
 }

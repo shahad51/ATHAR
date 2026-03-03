@@ -40,9 +40,10 @@ dependencies:
   # Image & Storage
   image_picker: ^1.0.7
   path_provider: ^2.1.2
+  image: ^4.1.7
   
   # AI/ML
-  tflite_flutter: ^0.10.4
+  tflite_flutter: ^0.12.1
 
   # Utilities
   uuid: ^4.3.3

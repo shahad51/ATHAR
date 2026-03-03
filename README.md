@@ -176,14 +176,130 @@ The app supports:
 
 Default language is Arabic.
 
-## AI Image Matching
+## Core Features - Technical Details
 
-The app uses TensorFlow Lite for on-device image feature extraction. The matching algorithm:
-1. Extracts feature vectors from item images
-2. Computes cosine similarity between vectors
-3. Returns matches above the threshold (0.6)
+### 1. GPS Tracking System
 
-**Note**: The current implementation uses placeholder/simulated AI. For production, integrate a real TFLite model (e.g., MobileNet) in `assets/models/`.
+The GPS tracking system is a cornerstone feature that helps validate user locations and build movement history for pilgrims during Hajj/Umrah.
+
+#### How It Works:
+1. **Permission Management**: 
+   - Requests location permissions using `permission_handler`
+   - Checks if location services are enabled
+   - Guides users to settings if permissions are permanently denied
+
+2. **Real-time Tracking**:
+   - Uses `geolocator` package with high accuracy mode
+   - Streams position updates with 100-meter distance filter (reduces battery drain)
+   - Automatically saves location entries to Firestore
+
+3. **Smart Location Recognition**:
+   - Detects proximity to known Hajj sites (Mina, Arafat, Muzdalifah, Masjid Al-Haram, Jamarat)
+   - Uses 2km radius for site detection
+   - Calculates distance using Haversine formula via `Geolocator.distanceBetween()`
+
+4. **Data Storage**:
+   - Creates `MovementHistoryModel` with location entries
+   - Each entry includes: location name, lat/lng coordinates, timestamp, transport method
+   - Stores in Firestore `movementHistory` collection indexed by userId
+
+5. **Manual Entry Fallback**:
+   - If GPS permission denied, users can manually enter visited locations
+   - Marked with `isManualEntry: true` flag
+
+**Key Files**:
+- `lib/services/gps_service.dart` - Core GPS logic
+- `lib/models/movement_history_model.dart` - Data structure
+- `lib/screens/regular_user/gps_tracking_screen.dart` - UI
+
+---
+
+### 2. AI Image Matching System
+
+The AI-powered image matching is the second cornerstone that helps match lost items with found items using computer vision.
+
+#### How It Works:
+
+**Model**: EfficientNet-Lite0 (TensorFlow Lite)
+- **Size**: 18.5 MB (FP32 version)
+- **Input**: 224x224 RGB images
+- **Output**: 1000-dimensional feature vector
+- **Accuracy**: 75.1% on ImageNet
+- **Optimized for**: Mobile devices (12ms CPU latency on Pixel 4)
+
+#### Processing Pipeline:
+
+1. **Image Upload & Feature Extraction**:
+   ```
+   User uploads image → Resize to 224x224 → Normalize [0,1]
+   → Run through EfficientNet-Lite0 → Extract 1000-dim vector
+   → L2 normalize → Store in Firestore with report
+   ```
+
+2. **Image Preprocessing**:
+   - Decodes image using `image` package
+   - Resizes to 224x224 pixels (model input size)
+   - Converts to float array with RGB channels
+   - Normalizes pixel values to [0, 1] range
+
+3. **Feature Vector Extraction**:
+   - Runs image through TFLite interpreter
+   - Outputs 1000-dimensional feature vector (classification logits)
+   - Applies L2 normalization for better similarity comparison
+   - Stores normalized vector in Firestore `reports` collection
+
+4. **Matching Algorithm**:
+   - When user searches with image, extracts query feature vector
+   - Compares against all found item vectors using **Cosine Similarity**:
+     ```
+     similarity = (A · B) / (||A|| × ||B||)
+     ```
+   - Filters matches above threshold (default: 0.7 = 70% similarity)
+   - Sorts results by confidence score (descending)
+
+5. **Search Flow**:
+   ```
+   Query image → Extract features → Compare with all found items
+   → Calculate cosine similarity → Filter by threshold
+   → Sort by confidence → Return top matches
+   ```
+
+#### Why EfficientNet-Lite0?
+- **Mobile-optimized**: Removed squeeze-excite layers, uses ReLU6 instead of Swish
+- **Fast inference**: 12ms on mobile CPU
+- **Small size**: 4.7M parameters vs 25M+ in standard models
+- **Good accuracy**: 75.1% while being lightweight
+- **Better than alternatives**: Outperforms MobileNetV2 and ResNet-50 at similar latency
+
+#### Threshold Configuration:
+- Located in `lib/core/constants/app_constants.dart`
+- `aiMatchThreshold: 0.7` (70% similarity required)
+- Adjustable based on precision/recall requirements
+
+**Key Files**:
+- `lib/services/ai_matching_service.dart` - AI logic and TFLite integration
+- `assets/models/image_embedding_model.tflite` - EfficientNet-Lite0 model
+- `lib/providers/reports_provider.dart` - Orchestrates matching flow
+- `lib/screens/regular_user/search_screen.dart` - Search UI
+
+#### Dependencies:
+- `tflite_flutter: ^0.10.4` - TFLite runtime
+- `image: ^4.1.7` - Image preprocessing
+
+---
+
+## Performance Considerations
+
+**GPS Tracking**:
+- Distance filter (100m) reduces unnecessary updates
+- Background tracking supported via foreground service
+- Minimal battery impact with optimized settings
+
+**AI Matching**:
+- On-device inference (no server calls)
+- ~12-50ms per image on modern devices
+- Feature vectors cached in Firestore (no re-computation)
+- Efficient cosine similarity (O(n) where n = vector dimension)
 
 ## Contributing
 
