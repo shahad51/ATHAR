@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -72,27 +73,55 @@ class AtharApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatelessWidget {
+class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
+
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  bool _initializing = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkInitialAuth();
+  }
+
+  Future<void> _checkInitialAuth() async {
+    // Wait for initial auth check to complete
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (mounted) {
+      setState(() => _initializing = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, _) {
-        if (authProvider.isLoading) {
+        debugPrint('🟢 [AuthWrapper] Building... isLoggedIn: ${authProvider.isLoggedIn}, initializing: $_initializing');
+
+        // Only show splash during initial app load, not during login
+        if (_initializing && authProvider.isLoading) {
+          debugPrint('🟢 [AuthWrapper] Initial load - showing SplashScreen');
           return const SplashScreen();
         }
 
-        if (!authProvider.isLoggedIn) {
-          return const LoginScreen();
+        if (authProvider.isLoggedIn) {
+          debugPrint('🟢 [AuthWrapper] Logged in! Role: ${authProvider.currentUser?.role}');
+          return _getHomeScreen(authProvider.currentUser!.role);
         }
 
-        return _getHomeScreen(authProvider.currentUser!.role);
+        debugPrint('🟢 [AuthWrapper] Not logged in - showing LoginScreen');
+        return const LoginScreen();
       },
     );
   }
 
   Widget _getHomeScreen(UserRole role) {
+    debugPrint('🟢 [AuthWrapper] Getting home screen for role: $role');
     switch (role) {
       case UserRole.employee:
         return const EmployeeHomeScreen();

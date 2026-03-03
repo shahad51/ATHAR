@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_localizations.dart';
@@ -24,6 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -34,42 +36,55 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_isLoading) return;
 
+    setState(() => _isLoading = true);
+    debugPrint('🟡 [LoginScreen] Starting login...');
+    
     final authProvider = context.read<AuthProvider>();
     final result = await authProvider.login(
       _usernameController.text.trim(),
       _passwordController.text,
     );
 
+    debugPrint('🟡 [LoginScreen] Login result: ${result['success']}, error: ${result['error']}');
+
     if (!mounted) return;
 
+    setState(() => _isLoading = false);
+
     if (result['success']) {
+      debugPrint('🟡 [LoginScreen] Login successful!');
       // Navigation is handled by AuthWrapper in main.dart
-      // The AuthProvider state change will trigger automatic navigation
     } else {
+      debugPrint('🟡 [LoginScreen] Login failed, showing error');
       _showErrorMessage(result['error']);
     }
   }
 
   void _showErrorMessage(String? error) {
-    final l10n = AppLocalizations.of(context)!;
-    String message;
+    debugPrint('🟡 [LoginScreen] _showErrorMessage called with: $error');
 
+    String message;
     switch (error) {
       case 'account_pending':
-        message = l10n.get('account_pending');
+        message = 'حسابك قيد المراجعة - Account pending approval';
         break;
       case 'account_rejected':
-        message = l10n.get('account_rejected');
+        message = 'تم رفض حسابك - Account rejected';
         break;
       default:
-        message = l10n.get('invalid_credentials');
+        message = 'بيانات الدخول غير صحيحة - Invalid credentials';
     }
+
+    debugPrint('🟡 [LoginScreen] Showing snackbar: $message');
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
         backgroundColor: AppColors.error,
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }
@@ -77,7 +92,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final isLoading = context.watch<AuthProvider>().isLoading;
 
     return Scaffold(
       body: SafeArea(
@@ -99,8 +113,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 32),
                 CustomButton(
                   text: l10n.get('login'),
-                  onPressed: _handleLogin,
-                  isLoading: isLoading,
+                  onPressed: _isLoading ? null : _handleLogin,
+                  isLoading: _isLoading,
                 ),
                 const SizedBox(height: 24),
                 _buildRegisterLink(l10n),

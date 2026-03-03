@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/models.dart';
 import '../services/services.dart';
+// Debug logging enabled
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -17,36 +18,49 @@ class AuthProvider with ChangeNotifier {
   bool get isFirstLogin => _isFirstLogin;
 
   Future<void> initialize() async {
+    debugPrint('🔵 [AuthProvider] Initializing...');
     _isLoading = true;
     notifyListeners();
 
     try {
       _currentUser = await _authService.getCurrentUserData();
+      debugPrint(
+          '🔵 [AuthProvider] Init complete. User: ${_currentUser?.userId}, Role: ${_currentUser?.role}');
     } catch (e) {
+      debugPrint('🔵 [AuthProvider] Init error: $e');
       _error = e.toString();
     }
 
     _isLoading = false;
+    debugPrint(
+        '🔵 [AuthProvider] isLoading: $_isLoading, isLoggedIn: $isLoggedIn');
     notifyListeners();
   }
 
   Future<Map<String, dynamic>> login(String username, String password) async {
+    debugPrint('🔵 [AuthProvider] Login starting for: $username');
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
       final result = await _authService.login(username, password);
+      debugPrint(
+          '🔵 [AuthProvider] Login result: ${result['success']}, error: ${result['error']}');
 
       if (result['success']) {
         _currentUser = result['user'] as UserModel;
         _isFirstLogin = true;
         _isLoading = false;
+        debugPrint(
+            '🔵 [AuthProvider] SUCCESS! User set: ${_currentUser?.userId}, Role: ${_currentUser?.role}');
+        debugPrint('🔵 [AuthProvider] isLoggedIn: $isLoggedIn');
         notifyListeners();
       } else {
         _error = result['error'];
         _currentUser = null;
         _isLoading = false;
+        debugPrint('🔵 [AuthProvider] FAILED! Error: $_error');
         notifyListeners();
       }
 
@@ -55,6 +69,7 @@ class AuthProvider with ChangeNotifier {
       _isLoading = false;
       _error = e.toString();
       _currentUser = null;
+      debugPrint('🔵 [AuthProvider] EXCEPTION: $e');
       notifyListeners();
       return {'success': false, 'error': 'login_failed'};
     }

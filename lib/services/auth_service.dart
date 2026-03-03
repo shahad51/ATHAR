@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart';
 import '../models/models.dart';
 import '../core/utils/helpers.dart';
 
@@ -13,12 +14,15 @@ class AuthService {
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
   Future<Map<String, dynamic>> login(String username, String password) async {
+    debugPrint('🔐 [AuthService] Login attempt for: $username');
     try {
       final querySnapshot = await _firestore
           .collection('users')
           .where('username', isEqualTo: username.trim())
           .limit(1)
           .get();
+      debugPrint(
+          '🔐 [AuthService] Username query result: ${querySnapshot.docs.length} docs');
 
       if (querySnapshot.docs.isEmpty) {
         final mobileQuery = await _firestore
@@ -37,6 +41,7 @@ class AuthService {
 
       return _processLogin(querySnapshot.docs.first, password);
     } catch (e) {
+      debugPrint('🔐 [AuthService] Login error: $e');
       return {'success': false, 'error': 'invalid_credentials'};
     }
   }
@@ -45,8 +50,12 @@ class AuthService {
     DocumentSnapshot userDoc,
     String password,
   ) async {
+    debugPrint('🔐 [AuthService] Processing login...');
     final userData = userDoc.data() as Map<String, dynamic>;
+    debugPrint('🔐 [AuthService] User data: $userData');
     final user = UserModel.fromJson(userData);
+    debugPrint(
+        '🔐 [AuthService] User role: ${user.role}, status: ${user.activationStatus}');
 
     final passwordHash = userData['passwordHash'] ?? '';
     if (!Helpers.verifyPassword(password, passwordHash)) {
@@ -85,6 +94,8 @@ class AuthService {
 
     await _logLoginAttempt(user.userId, 'success');
     await _saveUserSession(user);
+    debugPrint(
+        '🔐 [AuthService] Login successful! User: ${user.userId}, Role: ${user.role}');
 
     return {'success': true, 'user': user};
   }
@@ -118,7 +129,26 @@ class AuthService {
         return {'success': false, 'error': 'mobile_exists'};
       }
 
-      final userId = Helpers.generateId();
+      // Create Firebase Auth user first
+      final email = '${username.trim()}@athar.app';
+      UserCredential? authResult;
+      try {
+        authResult = await _auth.createUserWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+      } catch (e) {
+        if (e.toString().contains('email-already-in-use')) {
+          return {'success': false, 'error': 'username_exists'};
+        }
+        print(  '🔐 [AuthService] Firebase Auth user creation FAILED: $e');
+        return {'success': false, 'error': 'registration_failed'};
+      }
+
+      // Use Firebase Auth UID as the user ID for consistency
+      final userId = authResult.user?.uid ?? Helpers.generateId();
+      debugPrint('🔐 [AuthService] Firebase Auth user created: $userId');
+
       final role = _parseAccountType(accountType);
       final activationStatus = role == UserRole.regular
           ? ActivationStatus.active
@@ -137,9 +167,23 @@ class AuthService {
         passwordHash: Helpers.hashPassword(password),
       );
 
-      await _firestore.collection('users').doc(userId).set(user.toJson());
+      debugPrint('🔐 [AuthService] Creating Firestore user document...');
+      try {
+        final userJson = user.toJson();
+        debugPrint('🔐 [AuthService] User JSON: $userJson');
+        await _firestore.collection('users').doc(userId).set(userJson);
+        debugPrint('🔐 [AuthService] Firestore user document created');
+      } catch (firestoreError) {
+        debugPrint('🔐 [AuthService] Firestore write FAILED: $firestoreError');
+        // User exists in Auth but not Firestore - try to clean up
+        try {
+          await _auth.currentUser?.delete();
+        } catch (_) {}
+        rethrow;
+      }
 
       if (role != UserRole.regular) {
+        debugPrint('🔐 [AuthService] Creating elevated account request...');
         final requestId = Helpers.generateId();
         final request = ElevatedAccountRequest(
           requestId: requestId,
@@ -153,10 +197,17 @@ class AuthService {
             .collection('elevatedAccountRequests')
             .doc(requestId)
             .set(request.toJson());
+        debugPrint('🔐 [AuthService] Elevated account request created');
       }
+
+      // Sign out after registration (user needs to login)
+      debugPrint('🔐 [AuthService] Signing out after registration...');
+      await _auth.signOut();
+      debugPrint('🔐 [AuthService] Registration complete - SUCCESS');
 
       return {'success': true, 'user': user};
     } catch (e) {
+      debugPrint('🔐 [AuthService] Registration FAILED with error: $e');
       return {'success': false, 'error': 'registration_failed'};
     }
   }
