@@ -79,14 +79,34 @@ class ReportCard extends StatelessWidget {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.tag,
+                          size: 14,
+                          color: AppColors.primaryGreen,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          report.referenceId,
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: AppColors.primaryGreen,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
                         Text(
                           Helpers.timeAgo(report.submissionDate),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textHint,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: AppColors.textHint,
+                                  ),
                         ),
                         if (report.isCenterSubmitted) ...[
                           const SizedBox(width: 8),
