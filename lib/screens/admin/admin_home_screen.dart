@@ -34,7 +34,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     final screens = [
       _buildDashboardTab(l10n),
       _buildReportsTab(l10n),
-      const NotificationsScreen(),
       const HistoryScreen(),
       const SettingsScreen(),
     ];
@@ -76,11 +75,6 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             icon: const Icon(Icons.article_outlined),
             activeIcon: const Icon(Icons.article),
             label: l10n.get('reports'),
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.notifications_outlined),
-            activeIcon: const Icon(Icons.notifications),
-            label: l10n.get('notifications'),
           ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.history_outlined),

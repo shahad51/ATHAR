@@ -150,9 +150,7 @@ class AuthService {
       debugPrint('🔐 [AuthService] Firebase Auth user created: $userId');
 
       final role = _parseAccountType(accountType);
-      final activationStatus = role == UserRole.regular
-          ? ActivationStatus.active
-          : ActivationStatus.pending;
+      final activationStatus = ActivationStatus.active;
 
       final user = UserModel(
         userId: userId,

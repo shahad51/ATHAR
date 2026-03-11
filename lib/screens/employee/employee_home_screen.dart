@@ -34,8 +34,7 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
     final screens = [
       _buildReportsTab(l10n),
       const EmployeeAddReportScreen(),
-      const NotificationsScreen(),
-      const HistoryScreen(),
+      // const HistoryScreen(),
       const SettingsScreen(),
     ];
 
@@ -60,16 +59,11 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
             activeIcon: const Icon(Icons.add_circle),
             label: l10n.get('add_report'),
           ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.notifications_outlined),
-            activeIcon: const Icon(Icons.notifications),
-            label: l10n.get('notifications'),
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.history_outlined),
-            activeIcon: const Icon(Icons.history),
-            label: l10n.get('history'),
-          ),
+          // BottomNavigationBarItem(
+          //   icon: const Icon(Icons.history_outlined),
+          //   activeIcon: const Icon(Icons.history),
+          //   label: l10n.get('history'),
+          // ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.settings_outlined),
             activeIcon: const Icon(Icons.settings),

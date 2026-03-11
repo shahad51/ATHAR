@@ -57,7 +57,31 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (result['success']) {
       debugPrint('🟡 [LoginScreen] Login successful!');
-      // Navigation is handled by AuthWrapper in main.dart
+
+      // Get user role and navigate to appropriate home screen
+      final user = authProvider.currentUser;
+      if (user != null) {
+        Widget homeScreen;
+        switch (user.role) {
+          case UserRole.employee:
+            homeScreen = const EmployeeHomeScreen();
+            break;
+          case UserRole.admin:
+            homeScreen = const AdminHomeScreen();
+            break;
+          case UserRole.manager:
+            homeScreen = const ManagerHomeScreen();
+            break;
+          default:
+            homeScreen = const RegularUserHomeScreen();
+        }
+
+        // Replace the entire navigation stack with home screen
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => homeScreen),
+          (route) => false,
+        );
+      }
     } else {
       debugPrint('🟡 [LoginScreen] Login failed, showing error');
       _showErrorMessage(result['error']);
@@ -110,8 +134,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 _buildUsernameField(l10n),
                 const SizedBox(height: 16),
                 _buildPasswordField(l10n),
-                const SizedBox(height: 8),
-                _buildForgotPassword(l10n),
+                // const SizedBox(height: 8),
+                // _buildForgotPassword(l10n),
                 const SizedBox(height: 32),
                 CustomButton(
                   text: l10n.get('login'),
