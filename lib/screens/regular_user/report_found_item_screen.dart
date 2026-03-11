@@ -84,11 +84,11 @@ class _ReportFoundItemScreenState extends State<ReportFoundItemScreen> {
       });
 
       // Analyze image with Gemini
-      _analyzeImageWithGemini(File(pickedFile.path));
+      _analyzeImageWithGemini(File(pickedFile.path), l10n);
     }
   }
 
-  Future<void> _analyzeImageWithGemini(File imageFile) async {
+  Future<void> _analyzeImageWithGemini(File imageFile, AppLocalizations l10n) async {
     try {
       final result = await _geminiService.analyzeItemImage(imageFile);
 
@@ -116,7 +116,7 @@ class _ReportFoundItemScreenState extends State<ReportFoundItemScreen> {
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✨ تم تحليل الصورة وملء البيانات تلقائياً'),
+            content: Text('✨ ${l10n.get('image_analyzed')}'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -125,7 +125,7 @@ class _ReportFoundItemScreenState extends State<ReportFoundItemScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('تعذر تحليل الصورة. يرجى إدخال البيانات يدوياً'),
+            content: Text(l10n.get('image_analysis_failed')),
             backgroundColor: AppColors.warning,
           ),
         );
@@ -136,7 +136,7 @@ class _ReportFoundItemScreenState extends State<ReportFoundItemScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('حدث خطأ أثناء تحليل الصورة'),
+            content: Text(l10n.get('image_analysis_error')),
             backgroundColor: AppColors.error,
           ),
         );
@@ -397,8 +397,8 @@ class _ReportFoundItemScreenState extends State<ReportFoundItemScreen> {
             const SizedBox(height: 16),
             CustomTextField(
               controller: _descriptionController,
-              label: 'الوصف (Description)',
-              hint: 'أدخل وصف الغرض الموجود',
+              label: l10n.get('description'),
+              hint: l10n.get('enter_description'),
               prefixIcon: const Icon(Icons.description_outlined),
               maxLines: 3,
             ),
@@ -479,7 +479,7 @@ class _ReportFoundItemScreenState extends State<ReportFoundItemScreen> {
                                 ),
                                 SizedBox(height: 12),
                                 Text(
-                                  '✨ جاري تحليل الصورة...',
+                                  '✨ ${l10n.get('image_analyzing')}',
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,

@@ -54,7 +54,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Report Details'),
+        title: Text(l10n.get('report_details')),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -77,9 +77,10 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                   _buildDetailRow(l10n.get('submission_date'),
                       Helpers.formatDateTime(widget.report.submissionDate)),
                   if (widget.report.isCenterSubmitted)
-                    _buildDetailRow(l10n.get('center_submitted'), 'Yes'),
+                    _buildDetailRow(
+                        l10n.get('center_submitted'), l10n.get('yes')),
                   if (widget.report.isManualEntry)
-                    _buildDetailRow(l10n.get('manual_entry'), 'Yes'),
+                    _buildDetailRow(l10n.get('manual_entry'), l10n.get('yes')),
                   const SizedBox(height: 24),
                   if (canUpdateStatus &&
                       widget.report.status == ReportStatus.inProgress)

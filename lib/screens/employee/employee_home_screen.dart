@@ -8,9 +8,7 @@ import '../../providers/providers.dart';
 import '../../services/services.dart';
 import '../../widgets/widgets.dart';
 import '../shared/app_drawer.dart';
-import '../shared/notifications_screen.dart';
 import '../shared/settings_screen.dart';
-import '../shared/history_screen.dart';
 import 'employee_add_report_screen.dart';
 import 'report_detail_screen.dart';
 

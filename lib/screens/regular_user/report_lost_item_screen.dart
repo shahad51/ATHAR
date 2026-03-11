@@ -260,7 +260,7 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
             children: [
               Icon(Icons.check_circle, color: AppColors.success),
               SizedBox(width: 8),
-              Text('Report Submitted'),
+              Text(l10n.get('report_submitted_success')),
             ],
           ),
           content: Column(
@@ -281,7 +281,7 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Your Reference ID:',
+                      l10n.get('your_reference_id'),
                       style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
@@ -301,7 +301,7 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
               ),
               SizedBox(height: 12),
               Text(
-                'Save this Reference ID to track your report later.',
+                l10n.get('save_reference_id'),
                 style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
               ),
             ],
@@ -312,7 +312,7 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                 Navigator.pop(context);
                 Navigator.pop(context);
               },
-              child: Text('OK'),
+              child: Text(l10n.get('ok')),
             ),
           ],
         ),

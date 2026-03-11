@@ -95,8 +95,8 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
               if (requests.isEmpty) {
                 return EmptyStateWidget(
                   icon: Icons.check_circle_outline,
-                  title: 'No Pending Requests',
-                  subtitle: 'All account requests have been processed',
+                  title: l10n.get('no_pending_requests'),
+                  subtitle: l10n.get('all_requests_processed'),
                 );
               }
 
@@ -106,8 +106,8 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
                 itemBuilder: (context, index) {
                   return _RequestCard(
                     request: requests[index],
-                    onApprove: () => _handleApprove(requests[index]),
-                    onReject: () => _handleReject(requests[index]),
+                    onApprove: () => _handleApprove(requests[index], l10n),
+                    onReject: () => _handleReject(requests[index], l10n),
                   );
                 },
               );
@@ -118,21 +118,22 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
     );
   }
 
-  Future<void> _handleApprove(ElevatedAccountRequest request) async {
+  Future<void> _handleApprove(ElevatedAccountRequest request, AppLocalizations l10n) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Approve Request'),
-        content: Text('Are you sure you want to approve this ${request.requestedRole} request?'),
+        title: Text(l10n.get('approve_request')),
+        content: Text(
+            '${l10n.get('approve_confirm')} ${request.requestedRole} ${l10n.get('requests')}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.get('cancel')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
-            child: const Text('Approve'),
+            child: Text(l10n.get('approve')),
           ),
         ],
       ),
@@ -150,7 +151,8 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
         managerId,
       );
 
-      await _notificationService.sendAccountApprovedNotification(request.userId);
+      await _notificationService
+          .sendAccountApprovedNotification(request.userId);
 
       final historyId = Helpers.generateId();
       await _firestoreService.logHistory(HistoryModel(
@@ -164,8 +166,8 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Request approved successfully'),
+          SnackBar(
+            content: Text(l10n.get('request_approved')),
             backgroundColor: AppColors.success,
           ),
         );
@@ -174,7 +176,7 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to approve: $e'),
+            content: Text('${l10n.get('failed_approve')}: $e'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -182,21 +184,22 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
     }
   }
 
-  Future<void> _handleReject(ElevatedAccountRequest request) async {
+  Future<void> _handleReject(ElevatedAccountRequest request, AppLocalizations l10n) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Reject Request'),
-        content: Text('Are you sure you want to reject this ${request.requestedRole} request?'),
+        title: Text(l10n.get('reject_request')),
+        content: Text(
+            '${l10n.get('reject_confirm')} ${request.requestedRole} ${l10n.get('requests')}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.get('cancel')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-            child: const Text('Reject'),
+            child: Text(l10n.get('reject')),
           ),
         ],
       ),
@@ -214,7 +217,8 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
         managerId,
       );
 
-      await _notificationService.sendAccountRejectedNotification(request.userId);
+      await _notificationService
+          .sendAccountRejectedNotification(request.userId);
 
       final historyId = Helpers.generateId();
       await _firestoreService.logHistory(HistoryModel(
@@ -228,8 +232,8 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Request rejected'),
+          SnackBar(
+            content: Text(l10n.get('request_rejected')),
             backgroundColor: AppColors.warning,
           ),
         );
@@ -238,7 +242,7 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to reject: $e'),
+            content: Text('${l10n.get('failed_reject')}: $e'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -281,7 +285,9 @@ class _RequestCard extends StatelessWidget {
                         CircleAvatar(
                           backgroundColor: AppColors.primaryGreen,
                           child: Text(
-                            user != null ? '${user.firstName[0]}${user.lastName[0]}' : '?',
+                            user != null
+                                ? '${user.firstName[0]}${user.lastName[0]}'
+                                : '?',
                             style: const TextStyle(color: Colors.white),
                           ),
                         ),
@@ -302,7 +308,8 @@ class _RequestCard extends StatelessWidget {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: AppColors.secondaryGold.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(20),
@@ -326,8 +333,8 @@ class _RequestCard extends StatelessWidget {
             Text(
               'Requested: ${Helpers.formatDateTime(request.createdAt)}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textSecondary,
-              ),
+                    color: AppColors.textSecondary,
+                  ),
             ),
             const SizedBox(height: 16),
             Row(

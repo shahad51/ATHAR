@@ -180,7 +180,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Smart Lost & Found System',
+          l10n.get('smart_lost_found'),
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -250,7 +250,7 @@ class _LoginScreenState extends State<LoginScreen> {
             );
           },
           icon: const Icon(Icons.search),
-          label: const Text('Track Report with Reference ID'),
+          label: Text(l10n.get('track_report_reference')),
           style: OutlinedButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           ),
@@ -260,7 +260,7 @@ class _LoginScreenState extends State<LoginScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              "Don't have an account? ",
+              l10n.get('dont_have_account'),
               style: TextStyle(color: AppColors.textSecondary),
             ),
             TextButton(
