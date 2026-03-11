@@ -9,7 +9,8 @@ class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations);
   }
 
-  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
 
   static final Map<String, Map<String, String>> _localizedValues = {
     'en': _englishStrings,
@@ -17,9 +18,9 @@ class AppLocalizations {
   };
 
   String get(String key) {
-    return _localizedValues[locale.languageCode]?[key] ?? 
-           _localizedValues['ar']?[key] ?? 
-           key;
+    return _localizedValues[locale.languageCode]?[key] ??
+        _localizedValues['ar']?[key] ??
+        key;
   }
 
   String translate(String key) => get(key);
@@ -63,12 +64,17 @@ class AppLocalizations {
     'verify': 'Verify',
     'reset_password': 'Reset Password',
     'invalid_credentials': 'Invalid username or password.',
-    'account_pending': 'Account is pending approval. Please wait for manager confirmation.',
+    'account_pending':
+        'Account is pending approval. Please wait for manager confirmation.',
     'account_rejected': 'Your account request was rejected.',
-    'missing_fields_search': 'Please complete all required fields before searching.',
-    'missing_fields_submit': 'Please complete all required fields before submitting.',
-    'invalid_location': 'You have not passed through this location. Please select a valid location from your visited routes.',
-    'no_match_found': 'You will be contacted if a matching item is found later.',
+    'missing_fields_search':
+        'Please complete all required fields before searching.',
+    'missing_fields_submit':
+        'Please complete all required fields before submitting.',
+    'invalid_location':
+        'You have not passed through this location. Please select a valid location from your visited routes.',
+    'no_match_found':
+        'You will be contacted if a matching item is found later.',
     'gps_denied': 'Location permission must be enabled to activate tracking',
     'report_submitted': 'Your report has been submitted successfully.',
     'changes_saved': 'Changes updated successfully',
@@ -107,7 +113,8 @@ class AppLocalizations {
     'language': 'Language',
     'arabic': 'العربية',
     'english': 'English',
-    'gps_tracking_question': 'Have you been using the app since the start of your pilgrimage?',
+    'gps_tracking_question':
+        'Have you been using the app since the start of your pilgrimage?',
     'yes': 'Yes',
     'no': 'No',
     'tracking_setup_complete': 'Tracking setup completed successfully',
@@ -139,7 +146,8 @@ class AppLocalizations {
     'match_found': 'A match has been found for your lost item.',
     'status_updated': 'Your report status has been updated.',
     'maintenance_notice': 'System maintenance is currently in progress.',
-    'new_report_notice': 'A new report has been submitted and needs your attention.',
+    'new_report_notice':
+        'A new report has been submitted and needs your attention.',
     'account_approved': 'Your account has been approved. You can now log in.',
     'faqs': 'Frequently Asked Questions',
     'how_to_use': 'How to Use',
@@ -176,6 +184,61 @@ class AppLocalizations {
     'select_match': 'Select a match (optional)',
     'no_matches': 'No matching items found',
     'center_holding_item': 'Item held at',
+    // New translations
+    'personal_information': 'Personal Information',
+    'account_setup': 'Account Setup',
+    'registration_successful': 'Registration successful! Please login.',
+    'smart_lost_found': 'Smart Lost & Found System',
+    'dont_have_account': "Don't have an account? ",
+    'track_report_reference': 'Track Report with Reference ID',
+    'report_details': 'Report Details',
+    'no_pending_requests': 'No Pending Requests',
+    'all_requests_processed': 'All account requests have been processed',
+    'approve_request': 'Approve Request',
+    'reject_request': 'Reject Request',
+    'approve_confirm': 'Are you sure you want to approve this',
+    'reject_confirm': 'Are you sure you want to reject this',
+    'request_approved': 'Request approved successfully',
+    'request_rejected': 'Request rejected',
+    'failed_approve': 'Failed to approve',
+    'failed_reject': 'Failed to reject',
+    'add_employee': 'Add Employee',
+    'create_employee_account': 'Create Employee Account',
+    'fill_employee_details':
+        'Fill in the details to create a new employee account',
+    'employee_created': 'Employee account created successfully!',
+    'failed_create_employee': 'Failed to create employee account',
+    'username_exists': 'Username already exists',
+    'mobile_exists': 'Mobile number already registered',
+    'report_submitted_success': 'Report Submitted',
+    'report_submitted_message': 'The report has been successfully submitted.',
+    'your_reference_id': 'Your Reference ID:',
+    'reference_id': 'Reference ID:',
+    'save_reference_id': 'Save this Reference ID to track your report later.',
+    'provide_reference_id':
+        'Please provide this Reference ID to the user so they can track their report.',
+    'ok': 'OK',
+    'continue': 'Continue',
+    'current_location': 'Current Location',
+    'location_unavailable': 'Location unavailable',
+    'refresh_location': 'Refresh location',
+    'description': 'Description',
+    'enter_description': 'Enter item description',
+    'image_analyzing': 'Analyzing image...',
+    'image_analyzed': 'Image analyzed and data filled automatically',
+    'image_analysis_failed':
+        'Failed to analyze image. Please enter data manually',
+    'image_analysis_error': 'An error occurred while analyzing the image',
+    'submit_behalf_pilgrim': 'Submit Report on Behalf of Pilgrim',
+    'send_maintenance_notice': 'Send Maintenance Notice',
+    'maintenance_confirm':
+        'This will notify all users about system maintenance. Continue?',
+    'send': 'Send',
+    'maintenance_sent': 'Maintenance notification sent to all users',
+    'reports_by_status': 'Reports by Status',
+    'no_data_available': 'No data available',
+    'optional': 'Optional',
+    'required': 'Required',
   };
 
   static const Map<String, String> _arabicStrings = {
@@ -328,10 +391,64 @@ class AppLocalizations {
     'select_match': 'اختر تطابق (اختياري)',
     'no_matches': 'لم يتم العثور على أغراض مطابقة',
     'center_holding_item': 'الغرض محفوظ في',
+    // New translations
+    'personal_information': 'المعلومات الشخصية',
+    'account_setup': 'إعداد الحساب',
+    'registration_successful': 'تم التسجيل بنجاح! يرجى تسجيل الدخول.',
+    'smart_lost_found': 'نظام ذكي للمفقودات',
+    'dont_have_account': 'ليس لديك حساب؟ ',
+    'track_report_reference': 'تتبع البلاغ بالرقم المرجعي',
+    'report_details': 'تفاصيل البلاغ',
+    'no_pending_requests': 'لا توجد طلبات معلقة',
+    'all_requests_processed': 'تمت معالجة جميع طلبات الحسابات',
+    'approve_request': 'الموافقة على الطلب',
+    'reject_request': 'رفض الطلب',
+    'approve_confirm': 'هل أنت متأكد من الموافقة على هذا',
+    'reject_confirm': 'هل أنت متأكد من رفض هذا',
+    'request_approved': 'تمت الموافقة على الطلب بنجاح',
+    'request_rejected': 'تم رفض الطلب',
+    'failed_approve': 'فشلت الموافقة',
+    'failed_reject': 'فشل الرفض',
+    'add_employee': 'إضافة موظف',
+    'create_employee_account': 'إنشاء حساب موظف',
+    'fill_employee_details': 'املأ التفاصيل لإنشاء حساب موظف جديد',
+    'employee_created': 'تم إنشاء حساب الموظف بنجاح!',
+    'failed_create_employee': 'فشل إنشاء حساب الموظف',
+    'username_exists': 'اسم المستخدم موجود بالفعل',
+    'mobile_exists': 'رقم الجوال مسجل بالفعل',
+    'report_submitted_success': 'تم إرسال البلاغ',
+    'report_submitted_message': 'تم إرسال البلاغ بنجاح.',
+    'your_reference_id': 'رقمك المرجعي:',
+    'reference_id': 'الرقم المرجعي:',
+    'save_reference_id': 'احفظ هذا الرقم المرجعي لتتبع بلاغك لاحقاً.',
+    'provide_reference_id':
+        'يرجى تزويد المستخدم بهذا الرقم المرجعي حتى يتمكن من تتبع بلاغه.',
+    'ok': 'حسناً',
+    'continue': 'متابعة',
+    'current_location': 'الموقع الحالي',
+    'location_unavailable': 'الموقع غير متاح',
+    'refresh_location': 'تحديث الموقع',
+    'description': 'الوصف',
+    'enter_description': 'أدخل وصف الغرض',
+    'image_analyzing': 'جاري تحليل الصورة...',
+    'image_analyzed': 'تم تحليل الصورة وملء البيانات تلقائياً',
+    'image_analysis_failed': 'تعذر تحليل الصورة. يرجى إدخال البيانات يدوياً',
+    'image_analysis_error': 'حدث خطأ أثناء تحليل الصورة',
+    'submit_behalf_pilgrim': 'تقديم بلاغ نيابة عن الحاج',
+    'send_maintenance_notice': 'إرسال إشعار الصيانة',
+    'maintenance_confirm':
+        'سيتم إشعار جميع المستخدمين بصيانة النظام. هل تريد المتابعة؟',
+    'send': 'إرسال',
+    'maintenance_sent': 'تم إرسال إشعار الصيانة لجميع المستخدمين',
+    'reports_by_status': 'البلاغات حسب الحالة',
+    'no_data_available': 'لا توجد بيانات متاحة',
+    'optional': 'اختياري',
+    'required': 'مطلوب',
   };
 }
 
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
