@@ -133,16 +133,61 @@ class _GpsTrackingDialogState extends State<GpsTrackingDialog> {
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context)!.get('tracking_setup_complete')),
+          content: Text(
+              AppLocalizations.of(context)!.get('tracking_setup_complete')),
           backgroundColor: AppColors.success,
         ),
       );
       Navigator.pop(context);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.get('gps_denied')),
-          backgroundColor: AppColors.error,
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.orange),
+              SizedBox(width: 8),
+              Text('Location Access Denied'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Location permission was denied.'),
+              SizedBox(height: 12),
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange.shade200),
+                ),
+                child: Text(
+                  'Matching accuracy and nearby center suggestions will be reduced until location access is enabled.',
+                  style: TextStyle(fontSize: 13, color: Colors.orange.shade900),
+                ),
+              ),
+              SizedBox(height: 12),
+              Text(
+                'You can still use the app with manual location entry.',
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                setState(() => _step = 2);
+              },
+              child: Text('Enter Manually'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('OK'),
+            ),
+          ],
         ),
       );
     }
@@ -197,7 +242,8 @@ class _GpsTrackingDialogState extends State<GpsTrackingDialog> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete, color: AppColors.error),
-                  onPressed: () => setState(() => _manualEntries.removeAt(index)),
+                  onPressed: () =>
+                      setState(() => _manualEntries.removeAt(index)),
                 ),
               ],
             ),
@@ -336,7 +382,8 @@ class _GpsTrackingDialogState extends State<GpsTrackingDialog> {
     setState(() => _isLoading = false);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(AppLocalizations.of(context)!.get('tracking_setup_complete')),
+        content:
+            Text(AppLocalizations.of(context)!.get('tracking_setup_complete')),
         backgroundColor: AppColors.success,
       ),
     );

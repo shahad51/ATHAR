@@ -6,6 +6,7 @@ import '../../core/localization/app_localizations.dart';
 import '../../models/models.dart';
 import '../../providers/providers.dart';
 import '../../widgets/widgets.dart';
+import '../shared/track_report_screen.dart';
 import '../regular_user/regular_user_home_screen.dart';
 import '../employee/employee_home_screen.dart';
 import '../admin/admin_home_screen.dart';
@@ -40,14 +41,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
     debugPrint('🟡 [LoginScreen] Starting login...');
-    
+
     final authProvider = context.read<AuthProvider>();
     final result = await authProvider.login(
       _usernameController.text.trim(),
       _passwordController.text,
     );
 
-    debugPrint('🟡 [LoginScreen] Login result: ${result['success']}, error: ${result['error']}');
+    debugPrint(
+        '🟡 [LoginScreen] Login result: ${result['success']}, error: ${result['error']}');
 
     if (!mounted) return;
 
@@ -214,21 +216,39 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildRegisterLink(AppLocalizations l10n) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
       children: [
-        Text(
-          "Don't have an account? ",
-          style: TextStyle(color: AppColors.textSecondary),
-        ),
-        TextButton(
+        OutlinedButton.icon(
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const RegisterScreen()),
+              MaterialPageRoute(builder: (_) => const TrackReportScreen()),
             );
           },
-          child: Text(l10n.get('register')),
+          icon: const Icon(Icons.search),
+          label: const Text('Track Report with Reference ID'),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              "Don't have an account? ",
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                );
+              },
+              child: Text(l10n.get('register')),
+            ),
+          ],
         ),
       ],
     );

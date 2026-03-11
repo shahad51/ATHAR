@@ -6,19 +6,22 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../providers/providers.dart';
+import '../../services/services.dart';
 import '../../widgets/widgets.dart';
 
 class EmployeeAddReportScreen extends StatefulWidget {
   const EmployeeAddReportScreen({super.key});
 
   @override
-  State<EmployeeAddReportScreen> createState() => _EmployeeAddReportScreenState();
+  State<EmployeeAddReportScreen> createState() =>
+      _EmployeeAddReportScreenState();
 }
 
 class _EmployeeAddReportScreenState extends State<EmployeeAddReportScreen> {
   final _formKey = GlobalKey<FormState>();
   final _colorController = TextEditingController();
   final _locationController = TextEditingController();
+  final FirestoreService _firestoreService = FirestoreService();
 
   String? _selectedItemType;
   String _reportType = 'found';
@@ -120,11 +123,72 @@ class _EmployeeAddReportScreenState extends State<EmployeeAddReportScreen> {
     if (!mounted) return;
 
     if (reportId != null) {
+      // Get the reference ID from the created report
+      final report = await _firestoreService.getReportById(reportId);
+      final referenceId = report?.referenceId ?? 'N/A';
+
       _resetForm();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.get('report_submitted')),
-          backgroundColor: AppColors.success,
+
+      // Show success with Reference ID
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.check_circle, color: AppColors.success),
+              SizedBox(width: 8),
+              Text('Report Submitted'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('The report has been successfully submitted.'),
+              SizedBox(height: 16),
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                      color: AppColors.primaryGreen.withOpacity(0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Reference ID:',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    SelectableText(
+                      referenceId,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryGreen,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 12),
+              Text(
+                'Please provide this Reference ID to the user so they can track their report.',
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('OK'),
+            ),
+          ],
         ),
       );
     }
@@ -170,7 +234,8 @@ class _EmployeeAddReportScreenState extends State<EmployeeAddReportScreen> {
                 return DropdownMenuItem(value: type, child: Text(type));
               }).toList(),
               onChanged: (value) => setState(() => _selectedItemType = value),
-              validator: (value) => value == null ? l10n.get('missing_fields_submit') : null,
+              validator: (value) =>
+                  value == null ? l10n.get('missing_fields_submit') : null,
             ),
             const SizedBox(height: 16),
             CustomTextField(
@@ -178,11 +243,15 @@ class _EmployeeAddReportScreenState extends State<EmployeeAddReportScreen> {
               label: l10n.get('item_color'),
               hint: l10n.get('enter_color'),
               prefixIcon: const Icon(Icons.color_lens_outlined),
-              validator: (value) => value?.isEmpty == true ? l10n.get('missing_fields_submit') : null,
+              validator: (value) => value?.isEmpty == true
+                  ? l10n.get('missing_fields_submit')
+                  : null,
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _locationController.text.isEmpty ? null : _locationController.text,
+              value: _locationController.text.isEmpty
+                  ? null
+                  : _locationController.text,
               decoration: InputDecoration(
                 labelText: l10n.get('item_location'),
                 prefixIcon: const Icon(Icons.location_on_outlined),
@@ -191,7 +260,8 @@ class _EmployeeAddReportScreenState extends State<EmployeeAddReportScreen> {
                 return DropdownMenuItem(value: loc, child: Text(loc));
               }).toList(),
               onChanged: (value) => _locationController.text = value ?? '',
-              validator: (value) => value == null ? l10n.get('missing_fields_submit') : null,
+              validator: (value) =>
+                  value == null ? l10n.get('missing_fields_submit') : null,
             ),
             const SizedBox(height: 32),
             CustomButton(
@@ -229,7 +299,8 @@ class _EmployeeAddReportScreenState extends State<EmployeeAddReportScreen> {
     );
   }
 
-  Widget _buildTypeOption(String label, IconData icon, bool isSelected, VoidCallback onTap) {
+  Widget _buildTypeOption(
+      String label, IconData icon, bool isSelected, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -248,14 +319,16 @@ class _EmployeeAddReportScreenState extends State<EmployeeAddReportScreen> {
             Icon(
               icon,
               size: 32,
-              color: isSelected ? AppColors.primaryGreen : AppColors.textSecondary,
+              color:
+                  isSelected ? AppColors.primaryGreen : AppColors.textSecondary,
             ),
             const SizedBox(height: 8),
             Text(
               label,
               style: TextStyle(
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected ? AppColors.primaryGreen : AppColors.textPrimary,
+                color:
+                    isSelected ? AppColors.primaryGreen : AppColors.textPrimary,
               ),
             ),
           ],
@@ -283,7 +356,9 @@ class _EmployeeAddReportScreenState extends State<EmployeeAddReportScreen> {
             width: double.infinity,
             decoration: BoxDecoration(
               border: Border.all(
-                color: isRequired && _imageFile == null ? AppColors.error : AppColors.divider,
+                color: isRequired && _imageFile == null
+                    ? AppColors.error
+                    : AppColors.divider,
                 width: 2,
               ),
               borderRadius: BorderRadius.circular(12),
@@ -307,7 +382,8 @@ class _EmployeeAddReportScreenState extends State<EmployeeAddReportScreen> {
                           backgroundColor: Colors.black54,
                           radius: 18,
                           child: IconButton(
-                            icon: const Icon(Icons.close, color: Colors.white, size: 18),
+                            icon: const Icon(Icons.close,
+                                color: Colors.white, size: 18),
                             onPressed: () => setState(() => _imageFile = null),
                           ),
                         ),
@@ -317,7 +393,8 @@ class _EmployeeAddReportScreenState extends State<EmployeeAddReportScreen> {
                 : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.add_a_photo_outlined, size: 40, color: AppColors.textHint),
+                      const Icon(Icons.add_a_photo_outlined,
+                          size: 40, color: AppColors.textHint),
                       const SizedBox(height: 8),
                       Text(
                         l10n.get('take_photo'),

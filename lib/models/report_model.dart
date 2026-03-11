@@ -34,6 +34,7 @@ class RouteMetadata {
 
 class ReportModel {
   final String reportId;
+  final String referenceId;
   final ReportType reportType;
   final String submittedBy;
   final String itemType;
@@ -52,6 +53,7 @@ class ReportModel {
 
   ReportModel({
     required this.reportId,
+    required this.referenceId,
     required this.reportType,
     required this.submittedBy,
     required this.itemType,
@@ -72,7 +74,9 @@ class ReportModel {
   factory ReportModel.fromJson(Map<String, dynamic> json) {
     return ReportModel(
       reportId: json['reportId'] ?? '',
-      reportType: json['reportType'] == 'found' ? ReportType.found : ReportType.lost,
+      referenceId: json['referenceId'] ?? '',
+      reportType:
+          json['reportType'] == 'found' ? ReportType.found : ReportType.lost,
       submittedBy: json['submittedBy'] ?? '',
       itemType: json['itemType'] ?? '',
       itemColor: json['itemColor'] ?? '',
@@ -99,6 +103,7 @@ class ReportModel {
   Map<String, dynamic> toJson() {
     return {
       'reportId': reportId,
+      'referenceId': referenceId,
       'reportType': reportType.name,
       'submittedBy': submittedBy,
       'itemType': itemType,
@@ -119,6 +124,7 @@ class ReportModel {
 
   ReportModel copyWith({
     String? reportId,
+    String? referenceId,
     ReportType? reportType,
     String? submittedBy,
     String? itemType,
@@ -137,6 +143,7 @@ class ReportModel {
   }) {
     return ReportModel(
       reportId: reportId ?? this.reportId,
+      referenceId: referenceId ?? this.referenceId,
       reportType: reportType ?? this.reportType,
       submittedBy: submittedBy ?? this.submittedBy,
       itemType: itemType ?? this.itemType,

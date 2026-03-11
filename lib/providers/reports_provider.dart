@@ -50,8 +50,10 @@ class ReportsProvider with ChangeNotifier {
 
     try {
       final reportId = Helpers.generateId();
+      final referenceId = Helpers.generateReferenceId();
 
-      final imageUrl = await _storageService.uploadReportImage(imageFile, reportId);
+      final imageUrl =
+          await _storageService.uploadReportImage(imageFile, reportId);
       if (imageUrl == null) {
         _error = 'Failed to upload image';
         _isLoading = false;
@@ -59,10 +61,12 @@ class ReportsProvider with ChangeNotifier {
         return null;
       }
 
-      final featureVector = await _aiMatchingService.extractFeatureVector(imageFile);
+      final featureVector =
+          await _aiMatchingService.extractFeatureVector(imageFile);
 
       final report = ReportModel(
         reportId: reportId,
+        referenceId: referenceId,
         reportType: ReportType.found,
         submittedBy: userId,
         itemType: itemType,
@@ -105,16 +109,19 @@ class ReportsProvider with ChangeNotifier {
 
     try {
       final reportId = Helpers.generateId();
+      final referenceId = Helpers.generateReferenceId();
       String? imageUrl;
       List<double>? featureVector;
 
       if (imageFile != null) {
         imageUrl = await _storageService.uploadReportImage(imageFile, reportId);
-        featureVector = await _aiMatchingService.extractFeatureVector(imageFile);
+        featureVector =
+            await _aiMatchingService.extractFeatureVector(imageFile);
       }
 
       final report = ReportModel(
         reportId: reportId,
+        referenceId: referenceId,
         reportType: ReportType.lost,
         submittedBy: userId,
         itemType: itemType,

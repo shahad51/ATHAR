@@ -118,4 +118,12 @@ class Helpers {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     return List.generate(20, (index) => chars[random.nextInt(chars.length)]).join();
   }
+
+  static String generateReferenceId() {
+    final now = DateTime.now();
+    final year = now.year;
+    final random = Random();
+    final randomNumber = random.nextInt(999999).toString().padLeft(6, '0');
+    return 'ATH-$year-$randomNumber';
+  }
 }

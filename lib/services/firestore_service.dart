@@ -48,6 +48,10 @@ class FirestoreService {
     }
   }
 
+  Future<ReportModel?> getReportById(String reportId) async {
+    return getReport(reportId);
+  }
+
   Stream<List<ReportModel>> reportsStream({
     String? submittedBy,
     ReportType? reportType,
@@ -73,7 +77,8 @@ class FirestoreService {
 
     return query.snapshots().map((snapshot) {
       return snapshot.docs
-          .map((doc) => ReportModel.fromJson(doc.data() as Map<String, dynamic>))
+          .map(
+              (doc) => ReportModel.fromJson(doc.data() as Map<String, dynamic>))
           .toList();
     });
   }
@@ -94,7 +99,8 @@ class FirestoreService {
 
       final snapshot = await query.get();
       var reports = snapshot.docs
-          .map((doc) => ReportModel.fromJson(doc.data() as Map<String, dynamic>))
+          .map(
+              (doc) => ReportModel.fromJson(doc.data() as Map<String, dynamic>))
           .toList();
 
       if (itemColor != null && itemColor.isNotEmpty) {
@@ -105,7 +111,9 @@ class FirestoreService {
 
       if (itemLocation != null && itemLocation.isNotEmpty) {
         reports = reports.where((r) {
-          return r.itemLocation.toLowerCase().contains(itemLocation.toLowerCase());
+          return r.itemLocation
+              .toLowerCase()
+              .contains(itemLocation.toLowerCase());
         }).toList();
       }
 
@@ -187,7 +195,8 @@ class FirestoreService {
 
   Future<MovementHistoryModel?> getMovementHistory(String userId) async {
     try {
-      final doc = await _firestore.collection('movementHistory').doc(userId).get();
+      final doc =
+          await _firestore.collection('movementHistory').doc(userId).get();
       if (!doc.exists) return null;
       return MovementHistoryModel.fromJson(doc.data()!, doc.id);
     } catch (e) {
@@ -216,7 +225,8 @@ class FirestoreService {
   ) async {
     final batch = _firestore.batch();
 
-    final requestRef = _firestore.collection('elevatedAccountRequests').doc(requestId);
+    final requestRef =
+        _firestore.collection('elevatedAccountRequests').doc(requestId);
     batch.update(requestRef, {
       'status': 'approved',
       'reviewedByManagerId': managerId,
@@ -238,7 +248,8 @@ class FirestoreService {
   ) async {
     final batch = _firestore.batch();
 
-    final requestRef = _firestore.collection('elevatedAccountRequests').doc(requestId);
+    final requestRef =
+        _firestore.collection('elevatedAccountRequests').doc(requestId);
     batch.update(requestRef, {
       'status': 'rejected',
       'reviewedByManagerId': managerId,
@@ -328,7 +339,8 @@ class FirestoreService {
     double minDistance = double.infinity;
 
     for (final location in locations) {
-      final distance = Helpers.calculateDistance(lat, lng, location.lat, location.lng);
+      final distance =
+          Helpers.calculateDistance(lat, lng, location.lat, location.lng);
       if (distance < minDistance) {
         minDistance = distance;
         nearest = location;
@@ -340,10 +352,14 @@ class FirestoreService {
 
   // History
   Future<void> logHistory(HistoryModel history) async {
-    await _firestore.collection('history').doc(history.historyId).set(history.toJson());
+    await _firestore
+        .collection('history')
+        .doc(history.historyId)
+        .set(history.toJson());
   }
 
-  Stream<List<HistoryModel>> historyStream(String actorId, ActionType actionType) {
+  Stream<List<HistoryModel>> historyStream(
+      String actorId, ActionType actionType) {
     return _firestore
         .collection('history')
         .where('actorId', isEqualTo: actorId)
@@ -351,7 +367,9 @@ class FirestoreService {
         .orderBy('timestamp', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => HistoryModel.fromJson(doc.data())).toList();
+      return snapshot.docs
+          .map((doc) => HistoryModel.fromJson(doc.data()))
+          .toList();
     });
   }
 

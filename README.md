@@ -301,6 +301,98 @@ The AI-powered image matching is the second cornerstone that helps match lost it
 - Feature vectors cached in Firestore (no re-computation)
 - Efficient cosine similarity (O(n) where n = vector dimension)
 
+---
+
+## Exception Handling
+
+The app implements comprehensive exception handling for three critical scenarios:
+
+### 1. Lost Phone Scenario
+
+**Problem**: User cannot access the app if their phone is the lost item.
+
+**Solutions Implemented**:
+- ✅ **Employee Reporting**: Lost & Found center employees can create reports on behalf of users
+- ✅ **Reference ID System**: Each report gets a unique, user-friendly Reference ID (format: `ATH-YYYY-XXXXXX`)
+- ✅ **Public Tracking**: Users can track reports without login using the Reference ID
+- ✅ **Reference ID Display**: Employees receive the Reference ID after submission to provide to the user
+
+**How to Use**:
+1. User visits Lost & Found center
+2. Employee creates report via `EmployeeAddReportScreen`
+3. System generates Reference ID (e.g., `ATH-2024-123456`)
+4. Employee provides Reference ID to user
+5. User can track report from login screen → "Track Report with Reference ID"
+
+**Key Files**:
+- `lib/screens/employee/employee_add_report_screen.dart` - Employee report submission
+- `lib/screens/shared/track_report_screen.dart` - Public tracking interface
+- `lib/core/utils/helpers.dart` - Reference ID generator
+
+---
+
+### 2. Location Permission Denied
+
+**Problem**: User denies GPS permission, reducing app functionality.
+
+**Solutions Implemented**:
+- ✅ **Manual Entry Fallback**: Users can manually enter visited locations
+- ✅ **Warning Messages**: Clear warnings displayed when permission denied
+- ✅ **Continued Functionality**: Reporting remains available with reduced accuracy
+- ✅ **Permission Banner**: Persistent banner shows when GPS disabled
+
+**Warning Message**:
+> "Matching accuracy and nearby center suggestions will be reduced until location access is enabled."
+
+**How It Works**:
+1. User denies GPS permission
+2. System shows warning dialog with manual entry option
+3. `GpsPermissionBanner` displays in report screens
+4. User can enter locations manually via `GpsTrackingDialog`
+5. Manual entries marked with `isManualEntry: true` flag
+
+**Key Files**:
+- `lib/screens/regular_user/gps_tracking_dialog.dart` - GPS setup with manual fallback
+- `lib/widgets/gps_permission_banner.dart` - Warning banner component
+- `lib/services/gps_service.dart` - Permission handling
+
+---
+
+### 3. Location Permission Changed Later
+
+**Problem**: User grants permission initially, then revokes it from device settings.
+
+**Solutions Implemented**:
+- ✅ **Automatic Detection**: `PermissionMonitor` detects permission changes using `AppLifecycleState`
+- ✅ **Data Preservation**: Previously stored GPS data remains in Firestore
+- ✅ **Warning Dialog**: Shows when permission revoked after app resume
+- ✅ **Continued Service**: App remains functional with manual entry
+
+**How It Works**:
+1. `PermissionMonitor` observes app lifecycle state
+2. When app resumes, checks current permission status
+3. If permission changed from granted → denied:
+   - Shows warning dialog
+   - Notifies user of reduced functionality
+   - Preserves existing location data
+4. User can continue using app with manual entry
+
+**Key Files**:
+- `lib/widgets/permission_monitor.dart` - Lifecycle-based permission monitoring
+- `lib/services/gps_service.dart` - Permission checking
+
+---
+
+## Exception Handling Summary
+
+| Scenario | Solution | User Experience |
+|----------|----------|-----------------|
+| Lost Phone | Reference ID tracking | Can track report from any device without login |
+| Permission Denied | Manual entry + warnings | Can still use app with reduced accuracy |
+| Permission Revoked | Auto-detection + warnings | Data preserved, manual entry available |
+
+All three scenarios ensure the app remains functional and user-friendly even in exceptional circumstances.
+
 ## Contributing
 
 1. Fork the repository
