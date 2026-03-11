@@ -21,17 +21,21 @@ class _EmployeeAddReportScreenState extends State<EmployeeAddReportScreen> {
   final _formKey = GlobalKey<FormState>();
   final _colorController = TextEditingController();
   final _locationController = TextEditingController();
+  final _descriptionController = TextEditingController();
   final FirestoreService _firestoreService = FirestoreService();
+  final GeminiService _geminiService = GeminiService();
 
   String? _selectedItemType;
   String _reportType = 'found';
   File? _imageFile;
   bool _isSubmitting = false;
+  bool _isAnalyzingImage = false;
 
   @override
   void dispose() {
     _colorController.dispose();
     _locationController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -66,7 +70,69 @@ class _EmployeeAddReportScreenState extends State<EmployeeAddReportScreen> {
 
     final pickedFile = await picker.pickImage(source: source, maxWidth: 1024);
     if (pickedFile != null) {
-      setState(() => _imageFile = File(pickedFile.path));
+      setState(() {
+        _imageFile = File(pickedFile.path);
+        _isAnalyzingImage = true;
+      });
+
+      // Analyze image with Gemini
+      _analyzeImageWithGemini(File(pickedFile.path));
+    }
+  }
+
+  Future<void> _analyzeImageWithGemini(File imageFile) async {
+    try {
+      final result = await _geminiService.analyzeItemImage(imageFile);
+
+      if (result != null && mounted) {
+        setState(() {
+          // Set item type if valid
+          if (result['itemType'] != null &&
+              AppConstants.itemTypes.contains(result['itemType'])) {
+            _selectedItemType = result['itemType'];
+          }
+
+          // Set color
+          if (result['itemColor'] != null) {
+            _colorController.text = result['itemColor']!;
+          }
+
+          // Set description
+          if (result['description'] != null) {
+            _descriptionController.text = result['description']!;
+          }
+
+          _isAnalyzingImage = false;
+        });
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✨ تم تحليل الصورة وملء البيانات تلقائياً'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      } else if (mounted) {
+        setState(() => _isAnalyzingImage = false);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('تعذر تحليل الصورة. يرجى إدخال البيانات يدوياً'),
+            backgroundColor: AppColors.warning,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isAnalyzingImage = false);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('حدث خطأ أثناء تحليل الصورة'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
 
