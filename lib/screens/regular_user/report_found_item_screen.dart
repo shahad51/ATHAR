@@ -395,6 +395,14 @@ class _ReportFoundItemScreenState extends State<ReportFoundItemScreen> {
                   : null,
             ),
             const SizedBox(height: 16),
+            CustomTextField(
+              controller: _descriptionController,
+              label: 'الوصف (Description)',
+              hint: 'أدخل وصف الغرض الموجود',
+              prefixIcon: const Icon(Icons.description_outlined),
+              maxLines: 3,
+            ),
+            const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               value: _locationController.text.isEmpty
                   ? null
@@ -456,6 +464,31 @@ class _ReportFoundItemScreenState extends State<ReportFoundItemScreen> {
                           fit: BoxFit.cover,
                         ),
                       ),
+                      if (_isAnalyzingImage)
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CircularProgressIndicator(
+                                  color: AppColors.primaryGreen,
+                                ),
+                                SizedBox(height: 12),
+                                Text(
+                                  '✨ جاري تحليل الصورة...',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       Positioned(
                         top: 8,
                         right: 8,

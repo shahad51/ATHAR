@@ -12,6 +12,7 @@ import '../shared/notifications_screen.dart';
 import '../shared/settings_screen.dart';
 import '../shared/history_screen.dart';
 import '../employee/report_detail_screen.dart';
+import 'add_employee_screen.dart';
 
 class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({super.key});
@@ -42,6 +43,16 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       appBar: AppBar(
         title: Text(l10n.get('app_name_arabic')),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person_add),
+            tooltip: 'Add Employee',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AddEmployeeScreen()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.build_outlined),
             tooltip: 'Send Maintenance Notice',
@@ -91,7 +102,8 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Send Maintenance Notice'),
-        content: const Text('This will notify all users about system maintenance. Continue?'),
+        content: const Text(
+            'This will notify all users about system maintenance. Continue?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -168,7 +180,8 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String title, String value, IconData icon, Color color) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -191,15 +204,15 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             Text(
               value,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 4),
             Text(
               title,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textSecondary,
-              ),
+                    color: AppColors.textSecondary,
+                  ),
             ),
           ],
         ),
@@ -285,11 +298,14 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildLegendItem(l10n.get('in_progress'), AppColors.statusInProgress),
+                          _buildLegendItem(l10n.get('in_progress'),
+                              AppColors.statusInProgress),
                           const SizedBox(height: 8),
-                          _buildLegendItem(l10n.get('matched'), AppColors.statusMatched),
+                          _buildLegendItem(
+                              l10n.get('matched'), AppColors.statusMatched),
                           const SizedBox(height: 8),
-                          _buildLegendItem(l10n.get('rejected'), AppColors.statusRejected),
+                          _buildLegendItem(
+                              l10n.get('rejected'), AppColors.statusRejected),
                         ],
                       ),
                     ],
@@ -336,8 +352,12 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
               stream: _firestoreService.reportsStream(isCenterSubmitted: true),
               builder: (context, snapshot) {
                 final reports = snapshot.data ?? [];
-                final lostCount = reports.where((r) => r.reportType == ReportType.lost).length;
-                final foundCount = reports.where((r) => r.reportType == ReportType.found).length;
+                final lostCount = reports
+                    .where((r) => r.reportType == ReportType.lost)
+                    .length;
+                final foundCount = reports
+                    .where((r) => r.reportType == ReportType.found)
+                    .length;
 
                 return Row(
                   children: [
@@ -352,10 +372,13 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                           children: [
                             Text(
                               '$lostCount',
-                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.error,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.error,
+                                  ),
                             ),
                             Text(l10n.get('lost')),
                           ],
@@ -374,10 +397,13 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                           children: [
                             Text(
                               '$foundCount',
-                              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.success,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.success,
+                                  ),
                             ),
                             Text(l10n.get('found')),
                           ],
@@ -424,7 +450,8 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => ReportDetailScreen(report: reports[index]),
+                        builder: (_) =>
+                            ReportDetailScreen(report: reports[index]),
                       ),
                     ),
                   );
@@ -447,15 +474,19 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             setState(() => _statusFilter = null);
           }),
           const SizedBox(width: 8),
-          _buildChip(l10n.get('in_progress'), _statusFilter == ReportStatus.inProgress, () {
+          _buildChip(
+              l10n.get('in_progress'), _statusFilter == ReportStatus.inProgress,
+              () {
             setState(() => _statusFilter = ReportStatus.inProgress);
           }),
           const SizedBox(width: 8),
-          _buildChip(l10n.get('matched'), _statusFilter == ReportStatus.matched, () {
+          _buildChip(l10n.get('matched'), _statusFilter == ReportStatus.matched,
+              () {
             setState(() => _statusFilter = ReportStatus.matched);
           }),
           const SizedBox(width: 8),
-          _buildChip(l10n.get('rejected'), _statusFilter == ReportStatus.rejected, () {
+          _buildChip(
+              l10n.get('rejected'), _statusFilter == ReportStatus.rejected, () {
             setState(() => _statusFilter = ReportStatus.rejected);
           }),
         ],

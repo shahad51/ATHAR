@@ -27,7 +27,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  String _selectedAccountType = 'regular';
 
   @override
   void dispose() {
@@ -79,21 +78,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       mobile: _mobileController.text,
       username: _usernameController.text,
       password: _passwordController.text,
-      accountType: _selectedAccountType,
+      accountType: 'regular',
     );
 
     if (!mounted) return;
 
     if (result['success']) {
-      String message;
-      if (_selectedAccountType == 'regular') {
-        message = 'Registration successful! Please login.';
-      } else {
-        message = l10n.get('account_pending');
-      }
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: AppColors.success),
+        SnackBar(
+          content: Text('Registration successful! Please login.'),
+          backgroundColor: AppColors.success,
+        ),
       );
       Navigator.pop(context);
     } else {
@@ -195,7 +190,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             controller: _firstNameController,
             label: l10n.get('first_name'),
             prefixIcon: const Icon(Icons.person_outline),
-            validator: (v) => Validators.validateName(v, l10n.get('first_name')),
+            validator: (v) =>
+                Validators.validateName(v, l10n.get('first_name')),
           ),
           const SizedBox(height: 16),
           CustomTextField(
@@ -247,8 +243,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
             obscureText: _obscurePassword,
             prefixIcon: const Icon(Icons.lock_outline),
             suffixIcon: IconButton(
-              icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+              icon: Icon(
+                  _obscurePassword ? Icons.visibility_off : Icons.visibility),
+              onPressed: () =>
+                  setState(() => _obscurePassword = !_obscurePassword),
             ),
             validator: Validators.validatePassword,
           ),
@@ -259,18 +257,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
             obscureText: _obscureConfirmPassword,
             prefixIcon: const Icon(Icons.lock_outline),
             suffixIcon: IconButton(
-              icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility),
-              onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+              icon: Icon(_obscureConfirmPassword
+                  ? Icons.visibility_off
+                  : Icons.visibility),
+              onPressed: () => setState(
+                  () => _obscureConfirmPassword = !_obscureConfirmPassword),
             ),
-            validator: (v) => Validators.validateConfirmPassword(v, _passwordController.text),
+            validator: (v) =>
+                Validators.validateConfirmPassword(v, _passwordController.text),
           ),
-          const SizedBox(height: 24),
-          Text(
-            l10n.get('account_type'),
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 12),
-          _buildAccountTypeSelector(l10n),
           const SizedBox(height: 32),
           Row(
             children: [
@@ -296,55 +291,5 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildAccountTypeSelector(AppLocalizations l10n) {
-    final types = [
-      {'value': 'regular', 'label': l10n.get('regular_user'), 'icon': Icons.person},
-      {'value': 'admin', 'label': l10n.get('admin'), 'icon': Icons.admin_panel_settings},
-      {'value': 'employee', 'label': l10n.get('employee'), 'icon': Icons.work},
-    ];
 
-    return Column(
-      children: types.map((type) {
-        final isSelected = _selectedAccountType == type['value'];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: InkWell(
-            onTap: () => setState(() => _selectedAccountType = type['value'] as String),
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: isSelected ? AppColors.primaryGreen : AppColors.divider,
-                  width: isSelected ? 2 : 1,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                color: isSelected ? AppColors.primaryGreen.withOpacity(0.05) : null,
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    type['icon'] as IconData,
-                    color: isSelected ? AppColors.primaryGreen : AppColors.textSecondary,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      type['label'] as String,
-                      style: TextStyle(
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                        color: isSelected ? AppColors.primaryGreen : AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                  if (isSelected)
-                    const Icon(Icons.check_circle, color: AppColors.primaryGreen),
-                ],
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
 }
