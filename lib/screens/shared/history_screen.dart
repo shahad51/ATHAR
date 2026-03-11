@@ -31,9 +31,9 @@ class HistoryScreen extends StatelessWidget {
         : ActionType.viewedReport;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.get('history')),
-      ),
+      // appBar: AppBar(
+      //   title: Text(l10n.get('history')),
+      // ),
       body: StreamBuilder<List<HistoryModel>>(
         stream: firestoreService.historyStream(userId, actionType),
         builder: (context, snapshot) {
