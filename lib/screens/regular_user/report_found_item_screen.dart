@@ -112,7 +112,8 @@ class _ReportFoundItemScreenState extends State<ReportFoundItemScreen> {
       imageFile: _imageFile!,
     );
 
-    if (reportId != null && authProvider.currentUser?.role == UserRole.regular) {
+    if (reportId != null &&
+        authProvider.currentUser?.role == UserRole.regular) {
       await _findNearestCenter();
     }
 
@@ -121,16 +122,143 @@ class _ReportFoundItemScreenState extends State<ReportFoundItemScreen> {
     if (!mounted) return;
 
     if (reportId != null) {
-      if (_nearestCenter != null && authProvider.currentUser?.role == UserRole.regular) {
-        setState(() => _showMap = true);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.get('report_submitted')),
-            backgroundColor: AppColors.success,
+      // Get the reference ID from the created report
+      final report = await _firestoreService.getReportById(reportId);
+      final referenceId = report?.referenceId ?? 'N/A';
+
+      if (_nearestCenter != null &&
+          authProvider.currentUser?.role == UserRole.regular) {
+        // Show Reference ID before showing map
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Row(
+              children: [
+                Icon(Icons.check_circle, color: AppColors.success),
+                SizedBox(width: 8),
+                Text('Report Submitted'),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Your found item report has been submitted successfully.'),
+                SizedBox(height: 16),
+                Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color: AppColors.primaryGreen.withOpacity(0.3)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Your Reference ID:',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      SelectableText(
+                        referenceId,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryGreen,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'Save this Reference ID to track your report later.',
+                  style:
+                      TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Continue'),
+              ),
+            ],
           ),
         );
-        Navigator.pop(context);
+        setState(() => _showMap = true);
+      } else {
+        // Show Reference ID dialog
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Row(
+              children: [
+                Icon(Icons.check_circle, color: AppColors.success),
+                SizedBox(width: 8),
+                Text('Report Submitted'),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.get('report_submitted')),
+                SizedBox(height: 16),
+                Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color: AppColors.primaryGreen.withOpacity(0.3)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Your Reference ID:',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      SelectableText(
+                        referenceId,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryGreen,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'Save this Reference ID to track your report later.',
+                  style:
+                      TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                child: Text('OK'),
+              ),
+            ],
+          ),
+        );
       }
     }
   }
@@ -187,7 +315,8 @@ class _ReportFoundItemScreenState extends State<ReportFoundItemScreen> {
                 return DropdownMenuItem(value: type, child: Text(type));
               }).toList(),
               onChanged: (value) => setState(() => _selectedItemType = value),
-              validator: (value) => value == null ? l10n.get('missing_fields_submit') : null,
+              validator: (value) =>
+                  value == null ? l10n.get('missing_fields_submit') : null,
             ),
             const SizedBox(height: 16),
             CustomTextField(
@@ -195,11 +324,15 @@ class _ReportFoundItemScreenState extends State<ReportFoundItemScreen> {
               label: l10n.get('item_color'),
               hint: l10n.get('enter_color'),
               prefixIcon: const Icon(Icons.color_lens_outlined),
-              validator: (value) => value?.isEmpty == true ? l10n.get('missing_fields_submit') : null,
+              validator: (value) => value?.isEmpty == true
+                  ? l10n.get('missing_fields_submit')
+                  : null,
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _locationController.text.isEmpty ? null : _locationController.text,
+              value: _locationController.text.isEmpty
+                  ? null
+                  : _locationController.text,
               decoration: InputDecoration(
                 labelText: l10n.get('item_location'),
                 prefixIcon: const Icon(Icons.location_on_outlined),
@@ -208,7 +341,8 @@ class _ReportFoundItemScreenState extends State<ReportFoundItemScreen> {
                 return DropdownMenuItem(value: loc, child: Text(loc));
               }).toList(),
               onChanged: (value) => _locationController.text = value ?? '',
-              validator: (value) => value == null ? l10n.get('missing_fields_submit') : null,
+              validator: (value) =>
+                  value == null ? l10n.get('missing_fields_submit') : null,
             ),
             const SizedBox(height: 32),
             CustomButton(
@@ -305,14 +439,16 @@ class _ReportFoundItemScreenState extends State<ReportFoundItemScreen> {
                   markerId: const MarkerId('user'),
                   position: _userLocation!,
                   infoWindow: const InfoWindow(title: 'Your Location'),
-                  icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+                  icon: BitmapDescriptor.defaultMarkerWithHue(
+                      BitmapDescriptor.hueRed),
                 ),
               if (_nearestCenter != null)
                 Marker(
                   markerId: const MarkerId('center'),
                   position: LatLng(_nearestCenter!.lat, _nearestCenter!.lng),
                   infoWindow: InfoWindow(title: _nearestCenter!.name),
-                  icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+                  icon: BitmapDescriptor.defaultMarkerWithHue(
+                      BitmapDescriptor.hueBlue),
                 ),
             },
             polylines: _routeData != null

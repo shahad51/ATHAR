@@ -33,7 +33,8 @@ class _RegularUserHomeScreenState extends State<RegularUserHomeScreen> {
 
   void _checkFirstLogin() {
     final authProvider = context.read<AuthProvider>();
-    if (authProvider.isFirstLogin && authProvider.currentUser?.role == UserRole.regular) {
+    if (authProvider.isFirstLogin &&
+        authProvider.currentUser?.role == UserRole.regular) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showDialog(
           context: context,
@@ -177,7 +178,8 @@ class _RegularUserHomeScreenState extends State<RegularUserHomeScreen> {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const ReportLostItemScreen()),
+                      MaterialPageRoute(
+                          builder: (_) => const ReportLostItemScreen()),
                     );
                   },
                 ),
@@ -189,7 +191,8 @@ class _RegularUserHomeScreenState extends State<RegularUserHomeScreen> {
                       color: AppColors.success.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.check_circle_outline, color: AppColors.success),
+                    child: const Icon(Icons.check_circle_outline,
+                        color: AppColors.success),
                   ),
                   title: Text(l10n.get('report_found')),
                   subtitle: const Text('Report an item you have found'),
@@ -198,7 +201,8 @@ class _RegularUserHomeScreenState extends State<RegularUserHomeScreen> {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const ReportFoundItemScreen()),
+                      MaterialPageRoute(
+                          builder: (_) => const ReportFoundItemScreen()),
                     );
                   },
                 ),
@@ -211,10 +215,62 @@ class _RegularUserHomeScreenState extends State<RegularUserHomeScreen> {
   }
 }
 
-class _DashboardTab extends StatelessWidget {
+class _DashboardTab extends StatefulWidget {
   final FirestoreService firestoreService;
 
   const _DashboardTab({required this.firestoreService});
+
+  @override
+  State<_DashboardTab> createState() => _DashboardTabState();
+}
+
+class _DashboardTabState extends State<_DashboardTab> {
+  final GpsService _gpsService = GpsService();
+  String _currentLocation = 'Loading...';
+
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentLocation();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    final position = await _gpsService.getCurrentPosition();
+    if (position != null) {
+      final locationName =
+          await _getLocationName(position.latitude, position.longitude);
+      if (mounted) {
+        setState(() => _currentLocation = locationName);
+      }
+    } else {
+      if (mounted) {
+        setState(() => _currentLocation = 'Location unavailable');
+      }
+    }
+  }
+
+  Future<String> _getLocationName(double lat, double lng) async {
+    final hajjSites = {
+      'Mina': {'lat': 21.4133, 'lng': 39.8933},
+      'Arafat': {'lat': 21.3549, 'lng': 39.9842},
+      'Muzdalifah': {'lat': 21.3833, 'lng': 39.9333},
+      'Masjid Al-Haram': {'lat': 21.4225, 'lng': 39.8262},
+      'Jamarat': {'lat': 21.4200, 'lng': 39.8733},
+    };
+
+    for (final entry in hajjSites.entries) {
+      final siteLat = entry.value['lat']!;
+      final siteLng = entry.value['lng']!;
+
+      final distance =
+          _gpsService.calculateDistanceBetween(lat, lng, siteLat, siteLng);
+      if (distance < 2000) {
+        return entry.key;
+      }
+    }
+
+    return 'Unknown Location';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -226,13 +282,17 @@ class _DashboardTab extends StatelessWidget {
     }
 
     return RefreshIndicator(
-      onRefresh: () async {},
+      onRefresh: () async {
+        await _getCurrentLocation();
+      },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildLocationCard(),
+            const SizedBox(height: 24),
             Text(
               l10n.get('my_lost_reports'),
               style: Theme.of(context).textTheme.headlineSmall,
@@ -252,9 +312,64 @@ class _DashboardTab extends StatelessWidget {
     );
   }
 
-  Widget _buildReportsList(String userId, ReportType type, AppLocalizations l10n) {
+  Widget _buildLocationCard() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreen.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.location_on,
+                color: AppColors.primaryGreen,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Current Location',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _currentLocation,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _getCurrentLocation,
+              tooltip: 'Refresh location',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReportsList(
+      String userId, ReportType type, AppLocalizations l10n) {
     return StreamBuilder<List<ReportModel>>(
-      stream: firestoreService.reportsStream(
+      stream: widget.firestoreService.reportsStream(
         submittedBy: userId,
         reportType: type,
       ),

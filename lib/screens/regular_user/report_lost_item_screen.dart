@@ -20,13 +20,13 @@ class ReportLostItemScreen extends StatefulWidget {
 class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
   final _formKey = GlobalKey<FormState>();
   final _colorController = TextEditingController();
-  
+
   String? _selectedItemType;
   String? _selectedLocation;
   File? _imageFile;
   bool _isSearching = false;
   bool _isSubmitting = false;
-  
+
   List<ReportMatch> _matches = [];
   String? _selectedMatchId;
   bool _hasSearched = false;
@@ -78,8 +78,8 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
     final l10n = AppLocalizations.of(context)!;
     final authProvider = context.read<AuthProvider>();
 
-    if (_selectedItemType == null || 
-        _colorController.text.isEmpty || 
+    if (_selectedItemType == null ||
+        _colorController.text.isEmpty ||
         _selectedLocation == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -94,8 +94,10 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
     if (authProvider.currentUser?.role == UserRole.regular) {
       final userId = authProvider.currentUser?.userId;
       if (userId != null) {
-        final movementHistory = await _firestoreService.getMovementHistory(userId);
-        if (movementHistory != null && !movementHistory.hasVisitedLocation(_selectedLocation!)) {
+        final movementHistory =
+            await _firestoreService.getMovementHistory(userId);
+        if (movementHistory != null &&
+            !movementHistory.hasVisitedLocation(_selectedLocation!)) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(l10n.get('invalid_location')),
@@ -127,8 +129,8 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
   Future<void> _submitReport() async {
     final l10n = AppLocalizations.of(context)!;
 
-    if (_selectedItemType == null || 
-        _colorController.text.isEmpty || 
+    if (_selectedItemType == null ||
+        _colorController.text.isEmpty ||
         _selectedLocation == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -164,27 +166,91 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
     if (!mounted) return;
 
     if (reportId != null) {
+      // Get the reference ID from the created report
+      final report = await _firestoreService.getReportById(reportId);
+      final referenceId = report?.referenceId ?? 'N/A';
+
       String message = l10n.get('report_submitted');
-      
-      if (_selectedMatchId != null && authProvider.currentUser?.role == UserRole.regular) {
+
+      if (_selectedMatchId != null &&
+          authProvider.currentUser?.role == UserRole.regular) {
         final matchedReport = _matches.firstWhere(
           (m) => m.report.reportId == _selectedMatchId,
         );
         if (matchedReport.report.nearestCenterName != null) {
-          message = '${l10n.get('center_holding_item')}: ${matchedReport.report.nearestCenterName}';
+          message =
+              '${l10n.get('center_holding_item')}: ${matchedReport.report.nearestCenterName}';
         }
-      } else if (_selectedMatchId == null && authProvider.currentUser?.role == UserRole.regular) {
+      } else if (_selectedMatchId == null &&
+          authProvider.currentUser?.role == UserRole.regular) {
         message = l10n.get('no_match_found');
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: AppColors.success,
-          duration: const Duration(seconds: 4),
+      // Show success dialog with Reference ID
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.check_circle, color: AppColors.success),
+              SizedBox(width: 8),
+              Text('Report Submitted'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(message),
+              SizedBox(height: 16),
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                      color: AppColors.primaryGreen.withOpacity(0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Your Reference ID:',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    SelectableText(
+                      referenceId,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primaryGreen,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 12),
+              Text(
+                'Save this Reference ID to track your report later.',
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              },
+              child: Text('OK'),
+            ),
+          ],
         ),
       );
-      Navigator.pop(context);
     }
   }
 
@@ -298,7 +364,8 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                           backgroundColor: Colors.black54,
                           radius: 18,
                           child: IconButton(
-                            icon: const Icon(Icons.close, color: Colors.white, size: 18),
+                            icon: const Icon(Icons.close,
+                                color: Colors.white, size: 18),
                             onPressed: () => setState(() => _imageFile = null),
                           ),
                         ),
@@ -316,7 +383,8 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                       const SizedBox(height: 8),
                       Text(
                         'Optional: Add image for better matching',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                        style: TextStyle(
+                            color: AppColors.textSecondary, fontSize: 12),
                       ),
                     ],
                   ),
@@ -372,14 +440,16 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
                 side: BorderSide(
-                  color: isSelected ? AppColors.primaryGreen : Colors.transparent,
+                  color:
+                      isSelected ? AppColors.primaryGreen : Colors.transparent,
                   width: 2,
                 ),
               ),
               child: InkWell(
                 onTap: () {
                   setState(() {
-                    _selectedMatchId = isSelected ? null : match.report.reportId;
+                    _selectedMatchId =
+                        isSelected ? null : match.report.reportId;
                   });
                 },
                 borderRadius: BorderRadius.circular(12),
@@ -418,7 +488,8 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                             ),
                             const SizedBox(height: 4),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
                                 color: AppColors.secondaryGold.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(4),
@@ -436,7 +507,8 @@ class _ReportLostItemScreenState extends State<ReportLostItemScreen> {
                         ),
                       ),
                       if (isSelected)
-                        const Icon(Icons.check_circle, color: AppColors.primaryGreen),
+                        const Icon(Icons.check_circle,
+                            color: AppColors.primaryGreen),
                     ],
                   ),
                 ),
