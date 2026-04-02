@@ -58,6 +58,11 @@ class AuthService {
         '🔐 [AuthService] User role: ${user.role}, status: ${user.activationStatus}');
 
     final passwordHash = userData['passwordHash'] ?? '';
+    final inputPasswordHash = Helpers.hashPassword(password);
+    debugPrint('🔐 [AuthService] Stored hash: $passwordHash');
+    debugPrint('🔐 [AuthService] Input hash:  $inputPasswordHash');
+    debugPrint('🔐 [AuthService] Hashes match: ${inputPasswordHash == passwordHash}');
+    
     if (!Helpers.verifyPassword(password, passwordHash)) {
       await _logLoginAttempt(user.userId, 'failure');
       return {'success': false, 'error': 'invalid_credentials'};
