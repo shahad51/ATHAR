@@ -13,6 +13,7 @@ import '../shared/settings_screen.dart';
 import '../shared/history_screen.dart';
 import '../employee/report_detail_screen.dart';
 import 'add_employee_screen.dart';
+import 'reports_export_screen.dart';
 
 class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({super.key});
@@ -35,29 +36,12 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       _buildDashboardTab(l10n),
       _buildReportsTab(l10n),
       const HistoryScreen(),
-      const SettingsScreen(),
+      const ReportsExportScreen(),
     ];
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.get('app_name_arabic')),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person_add),
-            tooltip: 'Add Employee',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AddEmployeeScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.build_outlined),
-            tooltip: 'Send Maintenance Notice',
-            onPressed: _sendMaintenanceNotification,
-          ),
-        ],
+        title: Text(l10n.get('app_name')),
       ),
       drawer: const AppDrawer(),
       body: screens[_currentIndex],
@@ -82,9 +66,9 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             label: l10n.get('history'),
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.settings_outlined),
-            activeIcon: const Icon(Icons.settings),
-            label: l10n.get('settings'),
+            icon: const Icon(Icons.assessment_outlined),
+            activeIcon: const Icon(Icons.assessment),
+            label: l10n.get('export_reports'),
           ),
         ],
       ),
@@ -331,86 +315,204 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   }
 
   Widget _buildCenterSubmittedSection(AppLocalizations l10n) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.get('center_submitted'),
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            StreamBuilder<List<ReportModel>>(
-              stream: _firestoreService.reportsStream(isCenterSubmitted: true),
-              builder: (context, snapshot) {
-                final reports = snapshot.data ?? [];
-                final lostCount = reports
-                    .where((r) => r.reportType == ReportType.lost)
-                    .length;
-                final foundCount = reports
-                    .where((r) => r.reportType == ReportType.found)
-                    .length;
+    return Column(
+      children: [
+        InkWell(
+          onTap: () {
+            setState(() {
+              _currentIndex = 1; // Switch to Reports tab
+              _statusFilter = null;
+            });
+            // TODO: Add filter for center submitted
+          },
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        l10n.get('center_submitted'),
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textHint),
+                    ],
+                  ),
+                const SizedBox(height: 16),
+                StreamBuilder<List<ReportModel>>(
+                  stream:
+                      _firestoreService.reportsStream(isCenterSubmitted: true),
+                  builder: (context, snapshot) {
+                    final reports = snapshot.data ?? [];
+                    final lostCount = reports
+                        .where((r) => r.reportType == ReportType.lost)
+                        .length;
+                    final foundCount = reports
+                        .where((r) => r.reportType == ReportType.found)
+                        .length;
 
-                return Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.error.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              '$lostCount',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headlineMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.error,
-                                  ),
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppColors.error.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            Text(l10n.get('lost')),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.success.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              '$foundCount',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headlineMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.success,
-                                  ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  '$lostCount',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.error,
+                                      ),
+                                ),
+                                Text(l10n.get('lost')),
+                              ],
                             ),
-                            Text(l10n.get('found')),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
-                  ],
-                );
-              },
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppColors.success.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  '$foundCount',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.success,
+                                      ),
+                                ),
+                                Text(l10n.get('found')),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
+        ),
+        const SizedBox(height: 16),
+        InkWell(
+          onTap: () {
+            setState(() {
+              _currentIndex = 1; // Switch to Reports tab
+              _statusFilter = null;
+            });
+            // TODO: Add filter for user submitted
+          },
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        l10n.get('user_submitted'),
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textHint),
+                    ],
+                  ),
+                const SizedBox(height: 16),
+                StreamBuilder<List<ReportModel>>(
+                  stream:
+                      _firestoreService.reportsStream(isCenterSubmitted: false),
+                  builder: (context, snapshot) {
+                    final reports = snapshot.data ?? [];
+                    final lostCount = reports
+                        .where((r) => r.reportType == ReportType.lost)
+                        .length;
+                    final foundCount = reports
+                        .where((r) => r.reportType == ReportType.found)
+                        .length;
+
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppColors.error.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  '$lostCount',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.error,
+                                      ),
+                                ),
+                                Text(l10n.get('lost')),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppColors.success.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  '$foundCount',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.success,
+                                      ),
+                                ),
+                                Text(l10n.get('found')),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+        ),
+      ],
     );
   }
 

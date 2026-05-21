@@ -9,8 +9,8 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primaryGreen,
-        primary: AppColors.primaryGreen,
+        seedColor: AppColors.primaryNavy,
+        primary: AppColors.primaryNavy,
         secondary: AppColors.secondaryGold,
         surface: AppColors.surface,
         error: AppColors.error,
@@ -25,14 +25,6 @@ class AppTheme {
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: Colors.white,
-        ),
-      ),
-      cardTheme: CardTheme(
-        color: AppColors.surface,
-        elevation: 2,
-        shadowColor: AppColors.cardShadow,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -75,7 +67,8 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.divider),

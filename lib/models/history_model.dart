@@ -1,6 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum ActionType { viewedReport, reviewedRequest }
+enum ActionType {
+  viewedReport,
+  reviewedRequest,
+  updatedReportStatus,
+  createdReport
+}
 
 class HistoryModel {
   final String historyId;
@@ -9,6 +14,7 @@ class HistoryModel {
   final ActionType actionType;
   final String targetId;
   final DateTime timestamp;
+  final String? details;
 
   HistoryModel({
     required this.historyId,
@@ -17,20 +23,34 @@ class HistoryModel {
     required this.actionType,
     required this.targetId,
     required this.timestamp,
+    this.details,
   });
 
   factory HistoryModel.fromJson(Map<String, dynamic> json) {
+    ActionType parseActionType(String? type) {
+      switch (type) {
+        case 'reviewedRequest':
+          return ActionType.reviewedRequest;
+        case 'updatedReportStatus':
+          return ActionType.updatedReportStatus;
+        case 'createdReport':
+          return ActionType.createdReport;
+        case 'viewedReport':
+        default:
+          return ActionType.viewedReport;
+      }
+    }
+
     return HistoryModel(
       historyId: json['historyId'] ?? '',
       actorId: json['actorId'] ?? '',
       actorRole: json['actorRole'] ?? '',
-      actionType: json['actionType'] == 'reviewedRequest'
-          ? ActionType.reviewedRequest
-          : ActionType.viewedReport,
+      actionType: parseActionType(json['actionType']),
       targetId: json['targetId'] ?? '',
       timestamp: json['timestamp'] is Timestamp
           ? (json['timestamp'] as Timestamp).toDate()
           : DateTime.now(),
+      details: json['details'],
     );
   }
 
@@ -42,6 +62,7 @@ class HistoryModel {
       'actionType': actionType.name,
       'targetId': targetId,
       'timestamp': Timestamp.fromDate(timestamp),
+      if (details != null) 'details': details,
     };
   }
 }

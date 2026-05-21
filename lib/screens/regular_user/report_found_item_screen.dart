@@ -159,6 +159,60 @@ class _ReportFoundItemScreenState extends State<ReportFoundItemScreen> {
       return;
     }
 
+    // Check location permission
+    final hasPermission = await _gpsService.checkPermission();
+    if (!hasPermission) {
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.orange),
+              SizedBox(width: 8),
+              Text(l10n.get('location_access_disabled')),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.get('location_permission_denied')),
+              SizedBox(height: 12),
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange.shade200),
+                ),
+                child: Text(
+                  l10n.get('location_warning_message'),
+                  style: TextStyle(fontSize: 13, color: Colors.orange.shade900),
+                ),
+              ),
+              SizedBox(height: 12),
+              Text(
+                l10n.get('continue_without_location'),
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(l10n.get('cancel')),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(l10n.get('continue')),
+            ),
+          ],
+        ),
+      );
+
+      if (proceed != true) return;
+    }
+
     setState(() => _isSubmitting = true);
 
     final authProvider = context.read<AuthProvider>();

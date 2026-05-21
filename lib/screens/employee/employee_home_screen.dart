@@ -9,6 +9,7 @@ import '../../services/services.dart';
 import '../../widgets/widgets.dart';
 import '../shared/app_drawer.dart';
 import '../shared/settings_screen.dart';
+import '../shared/history_screen.dart';
 import 'employee_add_report_screen.dart';
 import 'report_detail_screen.dart';
 
@@ -30,15 +31,16 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     final screens = [
+      _buildDashboardTab(l10n),
       _buildReportsTab(l10n),
       const EmployeeAddReportScreen(),
-      // const HistoryScreen(),
+      const HistoryScreen(),
       const SettingsScreen(),
     ];
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.get('app_name_arabic')),
+        title: Text(l10n.get('app_name')),
       ),
       drawer: const AppDrawer(),
       body: screens[_currentIndex],
@@ -47,6 +49,11 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
         onTap: (index) => setState(() => _currentIndex = index),
         type: BottomNavigationBarType.fixed,
         items: [
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.dashboard_outlined),
+            activeIcon: const Icon(Icons.dashboard),
+            label: l10n.get('dashboard'),
+          ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.article_outlined),
             activeIcon: const Icon(Icons.article),
@@ -57,17 +64,174 @@ class _EmployeeHomeScreenState extends State<EmployeeHomeScreen> {
             activeIcon: const Icon(Icons.add_circle),
             label: l10n.get('add_report'),
           ),
-          // BottomNavigationBarItem(
-          //   icon: const Icon(Icons.history_outlined),
-          //   activeIcon: const Icon(Icons.history),
-          //   label: l10n.get('history'),
-          // ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.history_outlined),
+            activeIcon: const Icon(Icons.history),
+            label: l10n.get('history'),
+          ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.settings_outlined),
             activeIcon: const Icon(Icons.settings),
             label: l10n.get('settings'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDashboardTab(AppLocalizations l10n) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildQuickStats(l10n),
+          const SizedBox(height: 16),
+          _buildRecentActivity(l10n),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickStats(AppLocalizations l10n) {
+    return Row(
+      children: [
+        Expanded(
+          child: FutureBuilder<int>(
+            future: _firestoreService.getReportsCount24h(),
+            builder: (context, snapshot) {
+              return Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Icon(Icons.article, color: AppColors.info, size: 32),
+                      const SizedBox(height: 8),
+                      Text(
+                        snapshot.data?.toString() ?? '...',
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        l10n.get('reports_24h'),
+                        style: Theme.of(context).textTheme.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: StreamBuilder<List<ReportModel>>(
+            stream: _firestoreService.reportsStream(
+                status: ReportStatus.inProgress),
+            builder: (context, snapshot) {
+              final count = snapshot.data?.length ?? 0;
+              return Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Icon(Icons.pending_actions,
+                          color: AppColors.warning, size: 32),
+                      const SizedBox(height: 8),
+                      Text(
+                        count.toString(),
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        l10n.get('pending_reports'),
+                        style: Theme.of(context).textTheme.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRecentActivity(AppLocalizations l10n) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.get('recent_reports'),
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 16),
+            StreamBuilder<List<ReportModel>>(
+              stream: _firestoreService.reportsStream(),
+              builder: (context, snapshot) {
+                final reports = (snapshot.data ?? []).take(5).toList();
+
+                if (reports.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(l10n.get('no_reports')),
+                  );
+                }
+
+                return Column(
+                  children: reports.map((report) {
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(
+                        report.reportType == ReportType.lost
+                            ? Icons.search_off
+                            : Icons.check_circle_outline,
+                        color: report.reportType == ReportType.lost
+                            ? AppColors.error
+                            : AppColors.success,
+                      ),
+                      title: Text('${report.itemType} - ${report.itemColor}'),
+                      subtitle: Text(Helpers.timeAgo(report.submissionDate)),
+                      trailing: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Helpers.getStatusColor(report.status)
+                              .withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          Helpers.getStatusText(report.status),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Helpers.getStatusColor(report.status),
+                          ),
+                        ),
+                      ),
+                      onTap: () => _openReportDetail(report),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

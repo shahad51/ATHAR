@@ -291,6 +291,16 @@ class _DashboardTabState extends State<_DashboardTab> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.asset(
+                'assets/images/hadith.jpeg',
+                width: double.infinity,
+                height: 180,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(height: 24),
             _buildLocationCard(),
             const SizedBox(height: 24),
             Text(

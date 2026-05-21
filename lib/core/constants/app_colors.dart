@@ -3,15 +3,20 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  static const Color primaryGreen = Color(0xFF1B6B3A);
-  static const Color primaryGreenLight = Color(0xFF2E8B4A);
-  static const Color primaryGreenDark = Color(0xFF145029);
+  static const Color primaryNavy = Color(0xFF0B1F3A);
+  static const Color primaryNavyLight = Color(0xFF1A3A5C);
+  static const Color primaryNavyDark = Color(0xFF061325);
 
-  static const Color secondaryGold = Color(0xFFC9A84C);
-  static const Color secondaryGoldLight = Color(0xFFDBC06E);
-  static const Color secondaryGoldDark = Color(0xFFAA8E3C);
+  // Backwards-compatible aliases (all screens use primaryGreen)
+  static const Color primaryGreen = primaryNavy;
+  static const Color primaryGreenLight = primaryNavyLight;
+  static const Color primaryGreenDark = primaryNavyDark;
 
-  static const Color background = Color(0xFFF5F5F5);
+  static const Color secondaryGold = Color(0xFFC8A96B);
+  static const Color secondaryGoldLight = Color(0xFFD9C094);
+  static const Color secondaryGoldDark = Color(0xFFA68A4F);
+
+  static const Color background = Color(0xFFF4F6F8);
   static const Color surface = Colors.white;
   static const Color error = Color(0xFFD32F2F);
   static const Color success = Color(0xFF388E3C);

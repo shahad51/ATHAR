@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../models/models.dart';
 import '../../providers/providers.dart';
+import '../../services/services.dart';
 import '../auth/login_screen.dart';
 import 'settings_screen.dart';
 import 'help_screen.dart';
@@ -68,6 +69,16 @@ class AppDrawer extends StatelessWidget {
                     );
                   },
                 ),
+                if (user?.role == UserRole.admin)
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.build_outlined,
+                    title: l10n.get('send_maintenance_notice'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showMaintenanceDialog(context, l10n);
+                    },
+                  ),
                 const Divider(),
                 _buildMenuItem(
                   context,
@@ -172,6 +183,38 @@ class AppDrawer extends StatelessWidget {
         return l10n.get('manager');
       default:
         return l10n.get('regular_user');
+    }
+  }
+
+  void _showMaintenanceDialog(BuildContext context, AppLocalizations l10n) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.get('send_maintenance_notice')),
+        content: Text(l10n.get('maintenance_confirm')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.get('cancel')),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.get('send')),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && context.mounted) {
+      await NotificationService().sendMaintenanceNotification();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.get('maintenance_sent')),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
     }
   }
 

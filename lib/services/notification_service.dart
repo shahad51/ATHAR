@@ -1,5 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../models/models.dart';
 import '../core/utils/helpers.dart';
 import 'firestore_service.dart';
@@ -7,9 +8,19 @@ import 'firestore_service.dart';
 class NotificationService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FirestoreService _firestoreService = FirestoreService();
+  final FlutterLocalNotificationsPlugin _localNotifications =
+      FlutterLocalNotificationsPlugin();
+
+  static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
+    'athar_high_importance_channel',
+    'High Importance Notifications',
+    description: 'This channel is used for important notifications.',
+    importance: Importance.high,
+  );
 
   Future<void> initialize() async {
     try {
+      // Request FCM permission
       final settings = await _messaging.requestPermission(
         alert: true,
         badge: true,
@@ -18,14 +29,42 @@ class NotificationService {
       );
 
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-        debugPrint('User granted notification permission');
+        debugPrint('✅ User granted notification permission');
       }
 
+      // Initialize local notifications
+      const androidSettings =
+          AndroidInitializationSettings('@mipmap/ic_launcher');
+      const iosSettings = DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
+      const initSettings = InitializationSettings(
+        android: androidSettings,
+        iOS: iosSettings,
+      );
+
+      await _localNotifications.initialize(
+        settings: initSettings,
+        onDidReceiveNotificationResponse: _onNotificationTapped,
+      );
+
+      // Create Android notification channel
+      await _localNotifications
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(_channel);
+
+      // Listen to FCM messages
       FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
       FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
-      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      FirebaseMessaging.onBackgroundMessage(
+          _firebaseMessagingBackgroundHandler);
+
+      debugPrint('✅ Notification service initialized successfully');
     } catch (e) {
-      debugPrint('Failed to initialize notifications: $e');
+      debugPrint('❌ Failed to initialize notifications: $e');
     }
   }
 
@@ -38,13 +77,62 @@ class NotificationService {
   }
 
   void _handleForegroundMessage(RemoteMessage message) {
-    debugPrint('Received foreground message: ${message.notification?.title}');
-    // Handle foreground notification display here
+    debugPrint(
+        '🔔 Received foreground message: ${message.notification?.title}');
+
+    final notification = message.notification;
+    if (notification != null) {
+      _showLocalNotification(
+        title: notification.title ?? 'ATHAR',
+        body: notification.body ?? '',
+        payload: message.data['reportId'],
+      );
+    }
   }
 
   void _handleMessageOpenedApp(RemoteMessage message) {
-    debugPrint('Message opened app: ${message.data}');
-    // Handle navigation based on message data
+    debugPrint('👆 Message opened app: ${message.data}');
+    // Navigation will be handled by onDidReceiveNotificationResponse
+  }
+
+  void _onNotificationTapped(NotificationResponse response) {
+    debugPrint('👆 Notification tapped: ${response.payload}');
+    // Handle navigation based on payload (reportId, etc.)
+    // This can be implemented with a global navigator key or event bus
+  }
+
+  Future<void> _showLocalNotification({
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    const androidDetails = AndroidNotificationDetails(
+      'athar_high_importance_channel',
+      'High Importance Notifications',
+      channelDescription: 'This channel is used for important notifications.',
+      importance: Importance.high,
+      priority: Priority.high,
+      showWhen: true,
+      icon: '@mipmap/ic_launcher',
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _localNotifications.show(
+      id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title: title,
+      body: body,
+      payload: payload,
+    );
   }
 
   // Send match notification to report submitter
