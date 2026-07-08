@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/localization/app_localizations.dart';
@@ -383,6 +384,8 @@ class _ReportFoundItemScreenState extends State<ReportFoundItemScreen> {
     }
   }
 
+  static const LatLng _fallbackCenter = LatLng(21.4266, 39.8256);
+
   Future<void> _findNearestCenter() async {
     final position = await _gpsService.getCurrentPosition();
     if (position == null) return;
@@ -393,14 +396,23 @@ class _ReportFoundItemScreenState extends State<ReportFoundItemScreen> {
       position.longitude,
     );
 
-    if (_nearestCenter != null) {
-      _routeData = await _mapsService.getDirections(
-        position.latitude,
-        position.longitude,
-        _nearestCenter!.lat,
-        _nearestCenter!.lng,
-      );
-    }
+    // Fallback to client's specified location if no center found in Firestore
+    _nearestCenter ??= LocationModel(
+      locationId: 'fallback_hotel_area',
+      name: 'Lost & Found Center - Hotel Area',
+      type: LocationType.center,
+      lat: _fallbackCenter.latitude,
+      lng: _fallbackCenter.longitude,
+      //address: 'Near Masjid Al-Haram, Makkah',
+      isActive: true,
+    );
+
+    _routeData = await _mapsService.getDirections(
+      position.latitude,
+      position.longitude,
+      _nearestCenter!.lat,
+      _nearestCenter!.lng,
+    );
   }
 
   @override
@@ -652,6 +664,21 @@ class _ReportFoundItemScreenState extends State<ReportFoundItemScreen> {
                 ],
               ),
               const SizedBox(height: 16),
+              CustomButton(
+                text: 'Open in Google Maps',
+                backgroundColor: AppColors.info,
+                onPressed: () async {
+                  final destLat = _nearestCenter?.lat ?? _fallbackCenter.latitude;
+                  final destLng = _nearestCenter?.lng ?? _fallbackCenter.longitude;
+                  final url = Uri.parse(
+                    'https://www.google.com/maps/dir/?api=1&destination=$destLat,$destLng',
+                  );
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  }
+                },
+              ),
+              const SizedBox(height: 12),
               CustomButton(
                 text: l10n.get('done'),
                 onPressed: () {

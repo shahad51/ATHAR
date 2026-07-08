@@ -60,7 +60,7 @@ class _RegularUserHomeScreenState extends State<RegularUserHomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.get('app_name_arabic')),
+        title: Text(l10n.get('app_name')),
         actions: [
           _buildNotificationBadge(),
         ],
@@ -256,7 +256,11 @@ class _DashboardTabState extends State<_DashboardTab> {
       'Muzdalifah': {'lat': 21.3833, 'lng': 39.9333},
       'Masjid Al-Haram': {'lat': 21.4225, 'lng': 39.8262},
       'Jamarat': {'lat': 21.4200, 'lng': 39.8733},
+      'Hotel Area': {'lat': 21.4266, 'lng': 39.8256},
     };
+
+    String? closestSite;
+    double minDistance = double.infinity;
 
     for (final entry in hajjSites.entries) {
       final siteLat = entry.value['lat']!;
@@ -264,12 +268,18 @@ class _DashboardTabState extends State<_DashboardTab> {
 
       final distance =
           _gpsService.calculateDistanceBetween(lat, lng, siteLat, siteLng);
-      if (distance < 2000) {
-        return entry.key;
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestSite = entry.key;
       }
     }
 
-    return 'Unknown Location';
+    // Return closest site if within 5km, otherwise show coordinates
+    if (closestSite != null && minDistance < 5000) {
+      return closestSite;
+    }
+
+    return 'Near ${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
   }
 
   @override

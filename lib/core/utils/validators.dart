@@ -24,6 +24,29 @@ class Validators {
     return null;
   }
 
+  static String? validateSaudiMobile(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Mobile number is required';
+    }
+    final cleaned = value.replaceAll(RegExp(r'[\s\-]'), '');
+    // Accept: +966XXXXXXXXX (12 chars with +) or 966XXXXXXXXX (12 digits) or 05XXXXXXXX (10 digits)
+    if (RegExp(r'^\+9665[0-9]{8}$').hasMatch(cleaned)) return null;
+    if (RegExp(r'^9665[0-9]{8}$').hasMatch(cleaned)) return null;
+    if (RegExp(r'^05[0-9]{8}$').hasMatch(cleaned)) return null;
+    return 'يرجى إدخال رقم جوال سعودي صحيح (مثال: +966512345678 أو 0512345678)';
+  }
+
+  static String? validateEmail(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Email is required';
+    }
+    if (!RegExp(r'^[\w\-\.]+@([\w\-]+\.)+[\w\-]{2,4}$')
+        .hasMatch(value.trim())) {
+      return 'Please enter a valid email address';
+    }
+    return null;
+  }
+
   static String? validateUsername(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'Username is required';

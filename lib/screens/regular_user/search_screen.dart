@@ -116,27 +116,32 @@ class _SearchScreenState extends State<SearchScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Column(
-      children: [
-        TabBar(
-          controller: _tabController,
-          labelColor: AppColors.primaryGreen,
-          unselectedLabelColor: AppColors.textSecondary,
-          tabs: [
-            Tab(text: l10n.get('attribute_search')),
-            Tab(text: l10n.get('image_search')),
-          ],
-        ),
-        Expanded(
-          child: TabBarView(
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.get('search')),
+      ),
+      body: Column(
+        children: [
+          TabBar(
             controller: _tabController,
-            children: [
-              _buildAttributeSearch(l10n),
-              _buildImageSearch(l10n),
+            labelColor: AppColors.primaryGreen,
+            unselectedLabelColor: AppColors.textSecondary,
+            tabs: [
+              Tab(text: l10n.get('attribute_search')),
+              Tab(text: l10n.get('image_search')),
             ],
           ),
-        ),
-      ],
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildAttributeSearch(l10n),
+                _buildImageSearch(l10n),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

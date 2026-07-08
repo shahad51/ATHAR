@@ -18,9 +18,6 @@ export 'employee/report_detail_screen.dart';
 // Admin screens
 export 'admin/admin_home_screen.dart';
 
-// Manager screens
-export 'manager/manager_home_screen.dart';
-
 // Shared screens
 export 'shared/app_drawer.dart';
 export 'shared/settings_screen.dart';

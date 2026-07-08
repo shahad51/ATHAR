@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum UserRole { regular, employee, admin, manager }
+enum UserRole { regular, employee, admin }
 
 enum ActivationStatus { active, pending, rejected }
 
@@ -9,6 +9,7 @@ class UserModel {
   final String firstName;
   final String lastName;
   final String mobile;
+  final String? email;
   final String username;
   final UserRole role;
   final ActivationStatus activationStatus;
@@ -22,6 +23,7 @@ class UserModel {
     required this.firstName,
     required this.lastName,
     required this.mobile,
+    this.email,
     required this.username,
     required this.role,
     required this.activationStatus,
@@ -37,6 +39,7 @@ class UserModel {
       firstName: json['firstName'] ?? '',
       lastName: json['lastName'] ?? '',
       mobile: json['mobile'] ?? '',
+      email: json['email'],
       username: json['username'] ?? '',
       role: _parseRole(json['role']),
       activationStatus: _parseActivationStatus(json['activationStatus']),
@@ -55,6 +58,7 @@ class UserModel {
       'firstName': firstName,
       'lastName': lastName,
       'mobile': mobile,
+      'email': email,
       'username': username,
       'role': role.name,
       'activationStatus': activationStatus.name,
@@ -70,6 +74,7 @@ class UserModel {
     String? firstName,
     String? lastName,
     String? mobile,
+    String? email,
     String? username,
     UserRole? role,
     ActivationStatus? activationStatus,
@@ -83,6 +88,7 @@ class UserModel {
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       mobile: mobile ?? this.mobile,
+      email: email ?? this.email,
       username: username ?? this.username,
       role: role ?? this.role,
       activationStatus: activationStatus ?? this.activationStatus,
@@ -101,8 +107,6 @@ class UserModel {
         return UserRole.employee;
       case 'admin':
         return UserRole.admin;
-      case 'manager':
-        return UserRole.manager;
       default:
         return UserRole.regular;
     }

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/report_model.dart';
 import '../constants/app_colors.dart';
-
 class Helpers {
   Helpers._();
 

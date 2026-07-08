@@ -179,8 +179,6 @@ class AppDrawer extends StatelessWidget {
         return l10n.get('employee');
       case UserRole.admin:
         return l10n.get('admin');
-      case UserRole.manager:
-        return l10n.get('manager');
       default:
         return l10n.get('regular_user');
     }

@@ -116,9 +116,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final localeProvider = context.watch<LocaleProvider>();
 
     return Scaffold(
-      // appBar: AppBar(
-      //   title: Text(l10n.get('settings')),
-      // ),
+      appBar: AppBar(
+        title: Text(l10n.get('settings')),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

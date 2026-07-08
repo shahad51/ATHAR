@@ -5,12 +5,12 @@ import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../models/models.dart';
 import '../../providers/providers.dart';
+import '../../providers/locale_provider.dart';
 import '../../widgets/widgets.dart';
 import '../shared/track_report_screen.dart';
 import '../regular_user/regular_user_home_screen.dart';
 import '../employee/employee_home_screen.dart';
 import '../admin/admin_home_screen.dart';
-import '../manager/manager_home_screen.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
 
@@ -69,9 +69,6 @@ class _LoginScreenState extends State<LoginScreen> {
           case UserRole.admin:
             homeScreen = const AdminHomeScreen();
             break;
-          case UserRole.manager:
-            homeScreen = const ManagerHomeScreen();
-            break;
           default:
             homeScreen = const RegularUserHomeScreen();
         }
@@ -90,17 +87,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _showErrorMessage(String? error) {
     debugPrint('🟡 [LoginScreen] _showErrorMessage called with: $error');
+    final l10n = AppLocalizations.of(context)!;
 
     String message;
     switch (error) {
       case 'account_pending':
-        message = 'حسابك قيد المراجعة - Account pending approval';
+        message = l10n.get('account_pending');
         break;
       case 'account_rejected':
-        message = 'تم رفض حسابك - Account rejected';
+        message = l10n.get('account_rejected');
+        break;
+      case 'email_not_verified':
+        message = l10n.get('email_not_verified');
         break;
       default:
-        message = 'بيانات الدخول غير صحيحة - Invalid credentials';
+        message = l10n.get('invalid_credentials');
     }
 
     debugPrint('🟡 [LoginScreen] Showing snackbar: $message');
@@ -108,8 +109,8 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.error,
-        duration: const Duration(seconds: 4),
+        backgroundColor: error == 'email_not_verified' ? AppColors.info : AppColors.error,
+        duration: const Duration(seconds: 5),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -118,6 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final localeProvider = context.watch<LocaleProvider>();
 
     return Scaffold(
       body: SafeArea(
@@ -128,14 +130,18 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 60),
+                Align(
+                  alignment: Alignment.topRight,
+                  child: _buildLanguageToggle(localeProvider),
+                ),
+                const SizedBox(height: 40),
                 _buildHeader(l10n),
                 const SizedBox(height: 48),
                 _buildUsernameField(l10n),
                 const SizedBox(height: 16),
                 _buildPasswordField(l10n),
-                // const SizedBox(height: 8),
-                // _buildForgotPassword(l10n),
+                const SizedBox(height: 8),
+                _buildForgotPassword(l10n),
                 const SizedBox(height: 32),
                 CustomButton(
                   text: l10n.get('login'),
@@ -266,6 +272,54 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildLanguageToggle(LocaleProvider localeProvider) {
+    final isArabic = localeProvider.locale.languageCode == 'ar';
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildLangButton(
+            'العربية',
+            isArabic,
+            () => localeProvider.setLocale(const Locale('ar')),
+          ),
+          _buildLangButton(
+            'EN',
+            !isArabic,
+            () => localeProvider.setLocale(const Locale('en')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLangButton(String label, bool isSelected, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primaryGreen : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : AppColors.textSecondary,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
     );
   }
 }

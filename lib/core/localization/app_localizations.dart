@@ -53,11 +53,11 @@ class AppLocalizations {
     'first_name': 'First Name',
     'last_name': 'Last Name',
     'mobile': 'Mobile Number',
+    'email': 'Email Address',
     'account_type': 'Account Type',
     'regular_user': 'Regular User',
     'employee': 'Lost & Found Center Employee',
     'admin': 'Administrator',
-    'manager': 'Manager',
     'forgot_password': 'Forgot Password?',
     'enter_otp': 'Enter OTP',
     'send_otp': 'Send OTP',
@@ -65,7 +65,8 @@ class AppLocalizations {
     'reset_password': 'Reset Password',
     'invalid_credentials': 'Invalid username or password.',
     'account_pending':
-        'Account is pending approval. Please wait for manager confirmation.',
+        'Account is pending approval. Please wait for admin confirmation.',
+    'email_not_verified': 'Please verify your email address before logging in. A new verification link has been sent to your email.',
     'account_rejected': 'Your account request was rejected.',
     'missing_fields_search':
         'Please complete all required fields before searching.',
@@ -269,8 +270,14 @@ class AppLocalizations {
     'potential_matches': 'Potential Matches',
     'location_access_disabled': 'Location Access Disabled',
     'location_permission_denied': 'Location permission is currently disabled.',
-    'location_warning_message': 'Matching accuracy and nearby center suggestions will be reduced until location access is enabled.',
-    'continue_without_location': 'You can continue without location access, but some features will be limited.',
+    'location_warning_message':
+        'Matching accuracy and nearby center suggestions will be reduced until location access is enabled.',
+    'continue_without_location':
+        'You can continue without location access, but some features will be limited.',
+    'generate_pdf_report': 'Generate PDF Report',
+    'view_pdf': 'View PDF',
+    'pdf_generated': 'PDF generated successfully',
+    'pdf_preview': 'PDF Preview',
   };
 
   static const Map<String, String> _arabicStrings = {
@@ -299,18 +306,19 @@ class AppLocalizations {
     'first_name': 'الاسم الأول',
     'last_name': 'اسم العائلة',
     'mobile': 'رقم الجوال',
+    'email': 'البريد الإلكتروني',
     'account_type': 'نوع الحساب',
     'regular_user': 'مستخدم عادي',
     'employee': 'موظف مركز المفقودات',
     'admin': 'مدير النظام',
-    'manager': 'المشرف العام',
     'forgot_password': 'نسيت كلمة المرور؟',
     'enter_otp': 'أدخل رمز التحقق',
     'send_otp': 'إرسال رمز التحقق',
     'verify': 'تحقق',
     'reset_password': 'إعادة تعيين كلمة المرور',
     'invalid_credentials': 'اسم المستخدم أو كلمة المرور غير صحيحة.',
-    'account_pending': 'حسابك قيد المراجعة. يرجى الانتظار لموافقة المشرف.',
+    'account_pending': 'حسابك قيد المراجعة. يرجى الانتظار لموافقة المسؤول.',
+    'email_not_verified': 'يرجى التحقق من بريدك الإلكتروني قبل تسجيل الدخول. تم إرسال رابط تحقق جديد إلى بريدك.',
     'account_rejected': 'تم رفض طلب حسابك.',
     'missing_fields_search': 'يرجى إكمال جميع الحقول المطلوبة قبل البحث.',
     'missing_fields_submit': 'يرجى إكمال جميع الحقول المطلوبة قبل الإرسال.',
@@ -506,8 +514,14 @@ class AppLocalizations {
     'potential_matches': 'تطابقات محتملة',
     'location_access_disabled': 'تم تعطيل الوصول للموقع',
     'location_permission_denied': 'صلاحية الموقع معطلة حالياً.',
-    'location_warning_message': 'سيتم تقليل دقة التطابق واقتراحات المراكز القريبة حتى يتم تفعيل الوصول للموقع.',
-    'continue_without_location': 'يمكنك المتابعة بدون الوصول للموقع، لكن بعض الميزات ستكون محدودة.',
+    'location_warning_message':
+        'سيتم تقليل دقة التطابق واقتراحات المراكز القريبة حتى يتم تفعيل الوصول للموقع.',
+    'continue_without_location':
+        'يمكنك المتابعة بدون الوصول للموقع، لكن بعض الميزات ستكون محدودة.',
+    'generate_pdf_report': 'إنشاء تقرير PDF',
+    'view_pdf': 'عرض PDF',
+    'pdf_generated': 'تم إنشاء ملف PDF بنجاح',
+    'pdf_preview': 'معاينة PDF',
   };
 }
 

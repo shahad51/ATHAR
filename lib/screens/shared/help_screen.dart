@@ -33,8 +33,6 @@ class HelpScreen extends StatelessWidget {
         return _buildAdminContent(context, l10n);
       case UserRole.employee:
         return _buildEmployeeContent(context, l10n);
-      case UserRole.manager:
-        return _buildManagerContent(context, l10n);
       default:
         return _buildRegularUserContent(context, l10n);
     }
@@ -152,32 +150,6 @@ class HelpScreen extends StatelessWidget {
           _buildPolicyItem(context, 'Document all transactions in the system'),
           _buildPolicyItem(context, 'Report any suspicious activities to your supervisor'),
           _buildPolicyItem(context, 'Maintain professional conduct with all users'),
-        ],
-      ),
-    ];
-  }
-
-  List<Widget> _buildManagerContent(BuildContext context, AppLocalizations l10n) {
-    return [
-      _buildSection(
-        context,
-        title: 'Account Management',
-        icon: Icons.manage_accounts_outlined,
-        children: [
-          _buildGuideItem(context, 'Reviewing Requests', 'Access pending account requests from the Requests tab. Review each application carefully before approving or rejecting.'),
-          _buildGuideItem(context, 'Approval Process', 'When approving, the user will receive a notification and can immediately log in with their credentials.'),
-          _buildGuideItem(context, 'Rejection Process', 'When rejecting, provide a valid reason. The user will be notified of the rejection.'),
-          _buildGuideItem(context, 'History', 'View your review history in the History tab to track all your decisions.'),
-        ],
-      ),
-      const SizedBox(height: 24),
-      _buildSection(
-        context,
-        title: l10n.get('contact_us'),
-        icon: Icons.contact_support_outlined,
-        children: [
-          _buildContactItem(context, Icons.email, 'manager-support@athar.app'),
-          _buildContactItem(context, Icons.phone, '+966 12 345 6791'),
         ],
       ),
     ];

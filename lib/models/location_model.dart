@@ -21,10 +21,13 @@ class LocationModel {
 
   factory LocationModel.fromJson(Map<String, dynamic> json) {
     final coordinates = json['coordinates'] as Map<String, dynamic>?;
+
     return LocationModel(
       locationId: json['locationId'] ?? '',
       name: json['name'] ?? '',
-      type: json['type'] == 'deposit' ? LocationType.deposit : LocationType.center,
+      type: json['type'] == 'deposit'
+          ? LocationType.deposit
+          : LocationType.center,
       lat: (coordinates?['lat'] ?? 0.0).toDouble(),
       lng: (coordinates?['lng'] ?? 0.0).toDouble(),
       isActive: json['isActive'] ?? true,

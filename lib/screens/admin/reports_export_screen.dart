@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../models/models.dart';
@@ -32,9 +36,9 @@ class _ReportsExportScreenState extends State<ReportsExportScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
-      // appBar: AppBar(
-      //   title: Text(l10n.get('export_reports')),
-      // ),
+      appBar: AppBar(
+        title: Text(l10n.get('export_reports')),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -62,6 +66,8 @@ class _ReportsExportScreenState extends State<ReportsExportScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 24),
+            _buildReportsChart(l10n),
             const SizedBox(height: 24),
             _buildExportButtons(l10n),
           ],
@@ -205,6 +211,118 @@ class _ReportsExportScreenState extends State<ReportsExportScreen> {
     );
   }
 
+  Widget _buildReportsChart(AppLocalizations l10n) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Reports Overview',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 16),
+            FutureBuilder<Map<String, int>>(
+              future: _firestoreService.getReportsCountByStatus(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const SizedBox(
+                    height: 180,
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                final data = snapshot.data!;
+                final maxValue = data.values.isEmpty
+                    ? 1
+                    : data.values.reduce((a, b) => a > b ? a : b);
+
+                return SizedBox(
+                  height: 180,
+                  child: BarChart(
+                    BarChartData(
+                      barGroups: [
+                        _buildBarGroup(0, data['InProgress'] ?? 0, AppColors.statusInProgress, maxValue),
+                        _buildBarGroup(1, data['Matched'] ?? 0, AppColors.statusMatched, maxValue),
+                        _buildBarGroup(2, data['Rejected'] ?? 0, AppColors.statusRejected, maxValue),
+                      ],
+                      titlesData: FlTitlesData(
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 32,
+                            getTitlesWidget: (value, meta) => Text(
+                              value.toInt().toString(),
+                              style: const TextStyle(fontSize: 10),
+                            ),
+                          ),
+                        ),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (value, meta) {
+                              final labels = [
+                                l10n.get('in_progress'),
+                                l10n.get('matched'),
+                                l10n.get('rejected'),
+                              ];
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  labels[value.toInt()],
+                                  style: const TextStyle(fontSize: 10),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      ),
+                      borderData: FlBorderData(show: false),
+                      gridData: const FlGridData(show: false),
+                      barTouchData: BarTouchData(
+                        touchTooltipData: BarTouchTooltipData(
+                          tooltipPadding: const EdgeInsets.all(8),
+                          getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                            final labels = [
+                              l10n.get('in_progress'),
+                              l10n.get('matched'),
+                              l10n.get('rejected'),
+                            ];
+                            return BarTooltipItem(
+                              '${labels[groupIndex]}: ${rod.toY.toInt()}',
+                              const TextStyle(color: Colors.white),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  BarChartGroupData _buildBarGroup(int x, int value, Color color, int maxValue) {
+    return BarChartGroupData(
+      x: x,
+      barRods: [
+        BarChartRodData(
+          toY: value.toDouble(),
+          color: color,
+          width: 32,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+        ),
+      ],
+    );
+  }
+
   Widget _buildExportButtons(AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -214,6 +332,14 @@ class _ReportsExportScreenState extends State<ReportsExportScreen> {
           onPressed: _isGenerating ? null : _generateCSVReport,
           isLoading: _isGenerating,
           icon: Icons.table_chart,
+        ),
+        const SizedBox(height: 12),
+        CustomButton(
+          text: l10n.get('generate_pdf_report'),
+          onPressed: _isGenerating ? null : _generatePDFReport,
+          isLoading: _isGenerating,
+          icon: Icons.picture_as_pdf,
+          backgroundColor: AppColors.error,
         ),
         const SizedBox(height: 12),
         CustomButton(
@@ -296,6 +422,159 @@ class _ReportsExportScreenState extends State<ReportsExportScreen> {
     }
 
     setState(() => _isGenerating = false);
+  }
+
+  Future<void> _generatePDFReport() async {
+    setState(() => _isGenerating = true);
+
+    try {
+      final reports = await _fetchFilteredReports();
+
+      if (reports.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  AppLocalizations.of(context)!.get('no_reports_to_export')),
+              backgroundColor: AppColors.warning,
+            ),
+          );
+        }
+        setState(() => _isGenerating = false);
+        return;
+      }
+
+      final pdf = await _buildPDF(reports);
+
+      if (!mounted) return;
+
+      await showDialog(
+        context: context,
+        builder: (context) => Dialog(
+          insetPadding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              AppBar(
+                title: Text(AppLocalizations.of(context)!.get('pdf_preview')),
+                automaticallyImplyLeading: false,
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              Expanded(
+                child: PdfPreview(
+                  build: (format) => pdf.save(),
+                  allowPrinting: true,
+                  allowSharing: true,
+                  canChangeOrientation: false,
+                  canChangePageFormat: false,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+
+    setState(() => _isGenerating = false);
+  }
+
+  Future<pw.Document> _buildPDF(List<ReportModel> reports) async {
+    final l10n = AppLocalizations.of(context)!;
+    final pdf = pw.Document();
+    // Load Amiri font from Google Fonts - supports Arabic
+    final font = await PdfGoogleFonts.amiriRegular();
+    final fontBold = await PdfGoogleFonts.amiriBold();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(32),
+        build: (context) => [
+          pw.Header(
+            level: 0,
+            child: pw.Text(
+              'ATHAR - Reports Export',
+              style: pw.TextStyle(font: fontBold, fontSize: 24),
+            ),
+          ),
+          pw.Text(
+            'Generated: ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}',
+            style: pw.TextStyle(font: font, fontSize: 12, color: PdfColors.grey700),
+          ),
+          pw.SizedBox(height: 8),
+          if (_startDate != null || _endDate != null)
+            pw.Text(
+              'Date Range: ${_startDate != null ? DateFormat('yyyy-MM-dd').format(_startDate!) : 'Start'} - ${_endDate != null ? DateFormat('yyyy-MM-dd').format(_endDate!) : 'End'}',
+              style: pw.TextStyle(font: font, fontSize: 12),
+            ),
+          pw.SizedBox(height: 16),
+          pw.Table.fromTextArray(
+            headers: [
+              'Report ID',
+              'Reference ID',
+              'Type',
+              'Item Type',
+              'Item Color',
+              'Location',
+              'Status',
+              'Date',
+              'Source',
+            ],
+            data: reports.map((r) => [
+              r.reportId.substring(0, 8),
+              r.referenceId,
+              r.reportType.name,
+              r.itemType,
+              r.itemColor,
+              r.itemLocation,
+              r.status.name,
+              DateFormat('yyyy-MM-dd').format(r.submissionDate),
+              r.isCenterSubmitted ? 'Center' : 'User',
+            ]).toList(),
+            headerStyle: pw.TextStyle(font: fontBold, color: PdfColors.white),
+            headerDecoration: const pw.BoxDecoration(color: PdfColors.green800),
+            rowDecoration: const pw.BoxDecoration(
+              border: pw.Border(
+                bottom: pw.BorderSide(color: PdfColors.grey300),
+              ),
+            ),
+            cellStyle: pw.TextStyle(font: font, fontSize: 10),
+            cellAlignment: pw.Alignment.centerLeft,
+            headerAlignments: {
+              0: pw.Alignment.center,
+              1: pw.Alignment.center,
+              2: pw.Alignment.center,
+              3: pw.Alignment.center,
+              4: pw.Alignment.center,
+              5: pw.Alignment.center,
+              6: pw.Alignment.center,
+              7: pw.Alignment.center,
+              8: pw.Alignment.center,
+            },
+          ),
+          pw.SizedBox(height: 24),
+          pw.Text(
+            'Total Reports: ${reports.length}',
+            style: pw.TextStyle(font: fontBold, fontSize: 14),
+          ),
+        ],
+      ),
+    );
+
+    return pdf;
   }
 
   Future<void> _generateSummaryReport() async {

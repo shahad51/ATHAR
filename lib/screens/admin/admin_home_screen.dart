@@ -14,7 +14,7 @@ import '../shared/history_screen.dart';
 import '../employee/report_detail_screen.dart';
 import 'add_employee_screen.dart';
 import 'reports_export_screen.dart';
-
+import '../../core/utils/helpers.dart';
 class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({super.key});
 
@@ -543,13 +543,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 itemBuilder: (context, index) {
                   return ReportCard(
                     report: reports[index],
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            ReportDetailScreen(report: reports[index]),
-                      ),
-                    ),
+                    onTap: () => _openReportDetail(reports[index]),
                   );
                 },
               );
@@ -557,6 +551,32 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  void _openReportDetail(ReportModel report) async {
+    final userId = context.read<AuthProvider>().currentUser?.userId;
+    final role = context.read<AuthProvider>().currentUser?.role;
+
+    if (userId != null && role != null) {
+      final historyId = Helpers.generateId();
+      await _firestoreService.logHistory(HistoryModel(
+        historyId: historyId,
+        actorId: userId,
+        actorRole: role.name,
+        actionType: ActionType.viewedReport,
+        targetId: report.reportId,
+        timestamp: DateTime.now(),
+      ));
+    }
+
+    if (!mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ReportDetailScreen(report: report),
+      ),
     );
   }
 

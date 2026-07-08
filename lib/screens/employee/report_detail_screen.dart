@@ -93,6 +93,24 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
     if (!mounted) return;
 
     final l10n = AppLocalizations.of(context)!;
+    final userId = context.read<AuthProvider>().currentUser?.userId;
+    final role = context.read<AuthProvider>().currentUser?.role;
+
+    // Log status update history
+    if (userId != null) {
+      await _firestoreService.logHistory(HistoryModel(
+        historyId: Helpers.generateId(),
+        actorId: userId,
+        actorRole: role?.name ?? 'unknown',
+        actionType: ActionType.updatedReportStatus,
+        targetId: widget.report.reportId,
+        timestamp: DateTime.now(),
+        details: 'Status changed to ${Helpers.getStatusText(status)}',
+      ));
+    }
+
+    if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(status == ReportStatus.matched && _selectedMatchId != null
@@ -178,7 +196,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final role = context.read<AuthProvider>().currentUser?.role;
-    final canUpdateStatus = role == UserRole.employee;
+    final canUpdateStatus = role == UserRole.employee || role == UserRole.admin;
 
     return Scaffold(
       appBar: AppBar(

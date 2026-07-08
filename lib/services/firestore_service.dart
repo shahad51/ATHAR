@@ -204,66 +204,6 @@ class FirestoreService {
     }
   }
 
-  // Elevated Account Requests
-  Stream<List<ElevatedAccountRequest>> pendingRequestsStream() {
-    return _firestore
-        .collection('elevatedAccountRequests')
-        .where('status', isEqualTo: 'pending')
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => ElevatedAccountRequest.fromJson(doc.data()))
-          .toList();
-    });
-  }
-
-  Future<void> approveRequest(
-    String requestId,
-    String userId,
-    String managerId,
-  ) async {
-    final batch = _firestore.batch();
-
-    final requestRef =
-        _firestore.collection('elevatedAccountRequests').doc(requestId);
-    batch.update(requestRef, {
-      'status': 'approved',
-      'reviewedByManagerId': managerId,
-      'reviewedAt': Timestamp.now(),
-    });
-
-    final userRef = _firestore.collection('users').doc(userId);
-    batch.update(userRef, {
-      'activationStatus': 'active',
-    });
-
-    await batch.commit();
-  }
-
-  Future<void> rejectRequest(
-    String requestId,
-    String userId,
-    String managerId,
-  ) async {
-    final batch = _firestore.batch();
-
-    final requestRef =
-        _firestore.collection('elevatedAccountRequests').doc(requestId);
-    batch.update(requestRef, {
-      'status': 'rejected',
-      'reviewedByManagerId': managerId,
-      'reviewedAt': Timestamp.now(),
-    });
-
-    final userRef = _firestore.collection('users').doc(userId);
-    batch.update(userRef, {
-      'activationStatus': 'rejected',
-    });
-
-    await batch.commit();
-  }
-
   // Notifications
   Future<void> createNotification(NotificationModel notification) async {
     await _firestore

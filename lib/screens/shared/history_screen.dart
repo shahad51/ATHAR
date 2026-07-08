@@ -34,9 +34,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       );
     }
 
-    final defaultActionType = role == UserRole.manager
-        ? ActionType.reviewedRequest
-        : role == UserRole.admin || role == UserRole.employee
+    final defaultActionType = role == UserRole.admin || role == UserRole.employee
             ? ActionType.updatedReportStatus
             : ActionType.viewedReport;
 
@@ -125,10 +123,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   String _getEmptySubtitle(UserRole? role, ActionType actionType) {
-    if (role == UserRole.manager) {
-      return 'Your reviewed requests will appear here';
-    }
-
     switch (actionType) {
       case ActionType.updatedReportStatus:
         return 'Report status updates will appear here';

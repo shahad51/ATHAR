@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/utils/validators.dart';
 import '../../providers/providers.dart';
+import '../../providers/locale_provider.dart';
 import '../../widgets/widgets.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -21,6 +22,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _mobileController = TextEditingController();
+  final _emailController = TextEditingController();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -34,6 +36,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _mobileController.dispose();
+    _emailController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -45,9 +48,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (_firstNameController.text.isEmpty ||
           _lastNameController.text.isEmpty ||
           _mobileController.text.isEmpty ||
+          _emailController.text.isEmpty ||
           _usernameController.text.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please fill all fields')),
+        );
+        return;
+      }
+      final mobileError =
+          Validators.validateSaudiMobile(_mobileController.text);
+      if (mobileError != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(mobileError)),
+        );
+        return;
+      }
+      final emailError = Validators.validateEmail(_emailController.text);
+      if (emailError != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(emailError)),
         );
         return;
       }
@@ -76,6 +95,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       firstName: _firstNameController.text,
       lastName: _lastNameController.text,
       mobile: _mobileController.text,
+      email: _emailController.text,
       username: _usernameController.text,
       password: _passwordController.text,
       accountType: 'regular',
@@ -84,10 +104,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!mounted) return;
 
     if (result['success']) {
+      final verificationSent = result['email_verification_sent'] == true;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Registration successful! Please login.'),
+          content: Text(
+            verificationSent
+                ? 'Registration successful! Please check your email to verify your account before logging in.'
+                : 'Registration successful! Please login.',
+          ),
           backgroundColor: AppColors.success,
+          duration: Duration(seconds: verificationSent ? 6 : 3),
         ),
       );
       Navigator.pop(context);
@@ -113,6 +139,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isLoading = context.watch<AuthProvider>().isLoading;
+    final localeProvider = context.watch<LocaleProvider>();
+    final isArabic = localeProvider.locale.languageCode == 'ar';
 
     return Scaffold(
       appBar: AppBar(
@@ -121,6 +149,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          _buildLangActionButton(
+            'العربية',
+            isArabic,
+            () => localeProvider.setLocale(const Locale('ar')),
+          ),
+          _buildLangActionButton(
+            'EN',
+            !isArabic,
+            () => localeProvider.setLocale(const Locale('en')),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Form(
         key: _formKey,
@@ -206,7 +247,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
             label: l10n.get('mobile'),
             keyboardType: TextInputType.phone,
             prefixIcon: const Icon(Icons.phone_outlined),
-            validator: Validators.validateMobile,
+            validator: Validators.validateSaudiMobile,
+          ),
+          const SizedBox(height: 16),
+          CustomTextField(
+            controller: _emailController,
+            label: l10n.get('email'),
+            keyboardType: TextInputType.emailAddress,
+            prefixIcon: const Icon(Icons.email_outlined),
+            validator: Validators.validateEmail,
           ),
           const SizedBox(height: 16),
           CustomTextField(
@@ -291,5 +340,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-
+  Widget _buildLangActionButton(String label, bool isSelected, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primaryGreen : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : AppColors.textSecondary,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
 }

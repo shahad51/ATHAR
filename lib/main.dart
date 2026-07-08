@@ -14,7 +14,6 @@ import 'screens/auth/login_screen.dart';
 import 'screens/regular_user/regular_user_home_screen.dart';
 import 'screens/employee/employee_home_screen.dart';
 import 'screens/admin/admin_home_screen.dart';
-import 'screens/manager/manager_home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -127,8 +126,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
         return const EmployeeHomeScreen();
       case UserRole.admin:
         return const AdminHomeScreen();
-      case UserRole.manager:
-        return const ManagerHomeScreen();
       default:
         return const RegularUserHomeScreen();
     }

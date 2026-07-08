@@ -61,8 +61,9 @@ class AuthService {
     final inputPasswordHash = Helpers.hashPassword(password);
     debugPrint('🔐 [AuthService] Stored hash: $passwordHash');
     debugPrint('🔐 [AuthService] Input hash:  $inputPasswordHash');
-    debugPrint('🔐 [AuthService] Hashes match: ${inputPasswordHash == passwordHash}');
-    
+    debugPrint(
+        '🔐 [AuthService] Hashes match: ${inputPasswordHash == passwordHash}');
+
     if (!Helpers.verifyPassword(password, passwordHash)) {
       await _logLoginAttempt(user.userId, 'failure');
       return {'success': false, 'error': 'invalid_credentials'};
@@ -79,21 +80,39 @@ class AuthService {
     }
 
     try {
-      final email = '${user.username}@athar.app';
+      final authEmail = user.email != null && user.email!.isNotEmpty
+          ? user.email!
+          : '${user.username}@athar.app';
       try {
         await _auth.signInWithEmailAndPassword(
-          email: email,
+          email: authEmail,
           password: password,
         );
       } catch (e) {
         try {
           await _auth.createUserWithEmailAndPassword(
-            email: email,
+            email: authEmail,
             password: password,
           );
         } catch (_) {
           // User might exist, try signing in again
         }
+      }
+
+      // Check email verification for real emails
+      if (user.email != null &&
+          user.email!.isNotEmpty &&
+          _auth.currentUser != null &&
+          !_auth.currentUser!.emailVerified) {
+        try {
+          await _auth.currentUser!.sendEmailVerification();
+          debugPrint('🔐 [AuthService] Resent verification email to: ${user.email}');
+        } catch (e) {
+          debugPrint('🔐 [AuthService] Failed to resend verification: $e');
+        }
+        await _auth.signOut();
+        await _logLoginAttempt(user.userId, 'failure');
+        return {'success': false, 'error': 'email_not_verified'};
       }
     } catch (_) {}
 
@@ -109,6 +128,7 @@ class AuthService {
     required String firstName,
     required String lastName,
     required String mobile,
+    String? email,
     required String username,
     required String password,
     required String accountType,
@@ -134,19 +154,21 @@ class AuthService {
         return {'success': false, 'error': 'mobile_exists'};
       }
 
-      // Create Firebase Auth user first
-      final email = '${username.trim()}@athar.app';
+      // Create Firebase Auth user first - use real email if provided, else generate one
+      final authEmail = (email != null && email.trim().isNotEmpty)
+          ? email.trim()
+          : '${username.trim()}@athar.app';
       UserCredential? authResult;
       try {
         authResult = await _auth.createUserWithEmailAndPassword(
-          email: email,
+          email: authEmail,
           password: password,
         );
       } catch (e) {
         if (e.toString().contains('email-already-in-use')) {
           return {'success': false, 'error': 'username_exists'};
         }
-        print(  '🔐 [AuthService] Firebase Auth user creation FAILED: $e');
+        print('🔐 [AuthService] Firebase Auth user creation FAILED: $e');
         return {'success': false, 'error': 'registration_failed'};
       }
 
@@ -162,6 +184,7 @@ class AuthService {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         mobile: mobile.trim(),
+        email: (email != null && email.trim().isNotEmpty) ? email.trim() : null,
         username: username.trim(),
         role: role,
         activationStatus: activationStatus,
@@ -185,22 +208,14 @@ class AuthService {
         rethrow;
       }
 
-      if (role != UserRole.regular) {
-        debugPrint('🔐 [AuthService] Creating elevated account request...');
-        final requestId = Helpers.generateId();
-        final request = ElevatedAccountRequest(
-          requestId: requestId,
-          userId: userId,
-          requestedRole: role.name,
-          status: RequestStatus.pending,
-          createdAt: DateTime.now(),
-        );
-
-        await _firestore
-            .collection('elevatedAccountRequests')
-            .doc(requestId)
-            .set(request.toJson());
-        debugPrint('🔐 [AuthService] Elevated account request created');
+      // Send email verification if real email was used
+      if (email != null && email.trim().isNotEmpty) {
+        try {
+          await _auth.currentUser?.sendEmailVerification();
+          debugPrint('🔐 [AuthService] Email verification sent to: ${email.trim()}');
+        } catch (e) {
+          debugPrint('🔐 [AuthService] Failed to send verification email: $e');
+        }
       }
 
       // Sign out after registration (user needs to login)
@@ -208,10 +223,38 @@ class AuthService {
       await _auth.signOut();
       debugPrint('🔐 [AuthService] Registration complete - SUCCESS');
 
-      return {'success': true, 'user': user};
+      return {'success': true, 'user': user, 'email_verification_sent': email != null && email.trim().isNotEmpty};
     } catch (e) {
       debugPrint('🔐 [AuthService] Registration FAILED with error: $e');
       return {'success': false, 'error': 'registration_failed'};
+    }
+  }
+
+  Future<Map<String, dynamic>> resendEmailVerification(String username) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('users')
+          .where('username', isEqualTo: username.trim())
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        return {'success': false, 'error': 'user_not_found'};
+      }
+
+      final userData = querySnapshot.docs.first.data() as Map<String, dynamic>;
+      final email = userData['email'] as String?;
+
+      if (email == null || email.isEmpty) {
+        return {'success': false, 'error': 'no_email'};
+      }
+
+      // Sign in temporarily to send verification
+      final passwordHash = userData['passwordHash'] ?? '';
+      // We can't sign in without password, so this is limited
+      return {'success': false, 'error': 'login_required'};
+    } catch (e) {
+      return {'success': false, 'error': 'resend_failed'};
     }
   }
 

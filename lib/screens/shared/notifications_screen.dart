@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_localizations.dart';
 import '../../core/utils/helpers.dart';
@@ -25,9 +27,9 @@ class NotificationsScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      // appBar: AppBar(
-      //   title: Text(l10n.get('notifications')),
-      // ),
+      appBar: AppBar(
+        title: Text(l10n.get('notifications')),
+      ),
       body: StreamBuilder<List<NotificationModel>>(
         stream: firestoreService.notificationsStream(userId),
         builder: (context, snapshot) {
@@ -56,11 +58,83 @@ class NotificationsScreen extends StatelessWidget {
                   if (!notification.isRead) {
                     await firestoreService.markNotificationRead(notification.notificationId);
                   }
+                  if (notification.type == NotificationType.match && context.mounted) {
+                    _showMatchMapDialog(context, notification);
+                  }
                 },
               );
             },
           );
         },
+      ),
+    );
+  }
+
+  static const LatLng _centerLocation = LatLng(21.4266, 39.8256);
+
+  void _showMatchMapDialog(BuildContext context, NotificationModel notification) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Match Approved'),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 350,
+          child: Column(
+            children: [
+              Text(
+                notification.message,
+                style: Theme.of(context).textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: GoogleMap(
+                    initialCameraPosition: const CameraPosition(
+                      target: _centerLocation,
+                      zoom: 15,
+                    ),
+                    markers: {
+                      const Marker(
+                        markerId: MarkerId('center'),
+                        position: _centerLocation,
+                        infoWindow: InfoWindow(title: 'Lost & Found Center'),
+                      ),
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Please deliver the item to the Lost & Found Center.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final url = Uri.parse(
+                'https://www.google.com/maps/dir/?api=1&destination=${_centerLocation.latitude},${_centerLocation.longitude}',
+              );
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url, mode: LaunchMode.externalApplication);
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
+            child: const Text('Get Directions'),
+          ),
+        ],
       ),
     );
   }

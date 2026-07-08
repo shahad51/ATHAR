@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/localization/app_localizations.dart';
+import '../../core/utils/helpers.dart';
+import '../../models/models.dart';
 import '../../providers/providers.dart';
 import '../../services/services.dart';
 import '../../widgets/widgets.dart';
@@ -189,6 +191,20 @@ class _EmployeeAddReportScreenState extends State<EmployeeAddReportScreen> {
     if (!mounted) return;
 
     if (reportId != null) {
+      // Log created report history
+      final userId = authProvider.currentUser?.userId;
+      final role = authProvider.currentUser?.role;
+      if (userId != null && role != null) {
+        await _firestoreService.logHistory(HistoryModel(
+          historyId: Helpers.generateId(),
+          actorId: userId,
+          actorRole: role.name,
+          actionType: ActionType.createdReport,
+          targetId: reportId,
+          timestamp: DateTime.now(),
+        ));
+      }
+
       // Get the reference ID from the created report
       final report = await _firestoreService.getReportById(reportId);
       final referenceId = report?.referenceId ?? 'N/A';
@@ -275,17 +291,21 @@ class _EmployeeAddReportScreenState extends State<EmployeeAddReportScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              l10n.get('submit_behalf_pilgrim'),
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.get('add_report')),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                l10n.get('submit_behalf_pilgrim'),
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
             const SizedBox(height: 24),
             _buildReportTypeSelector(l10n),
             const SizedBox(height: 24),
@@ -346,6 +366,7 @@ class _EmployeeAddReportScreenState extends State<EmployeeAddReportScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
