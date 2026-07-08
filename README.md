@@ -218,16 +218,6 @@ flutter run
 
 ---
 
-# 📸 Screenshots
-
-> Add application screenshots here.
-
-| Login | Home | Lost Report | AI Match |
-|-------|------|------------|----------|
-| Image | Image | Image | Image |
-
----
-
 # 🔮 Future Improvements
 
 - OCR for reading serial numbers.
